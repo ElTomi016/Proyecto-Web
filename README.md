@@ -33,6 +33,34 @@ El siguiente diagrama muestra el modelo entidad–relación diseñado para la ap
 
 ---
 
+## Mockups de la Aplicación
+
+### Panel de Administración
+![Panel de Administración](mockups%20regata%20online_pages-to-jpg-0008.jpg)
+
+### Vista del Mapa
+![Vista del Mapa](mockups%20regata%20online_pages-to-jpg-0001.jpg)
+
+### Crear Barco
+![Crear Barco](mockups%20regata%20online_pages-to-jpg-0002.jpg)
+
+### Lista de Barcos
+![Lista de Barcos](mockups%20regata%20online_pages-to-jpg-0003.jpg)
+
+### Crear Jugador
+![Crear Jugador](mockups%20regata%20online_pages-to-jpg-0004.jpg)
+
+### Lista de Jugadores
+![Lista de Jugadores](mockups%20regata%20online_pages-to-jpg-0005.jpg)
+
+### Crear Modelo de Barco
+![Crear Modelo de Barco](mockups%20regata%20online_pages-to-jpg-0006.jpg)
+
+### Lista de Modelos de Barco
+![Lista de Modelos de Barco](mockups%20regata%20online_pages-to-jpg-0007.jpg)
+
+---
+
 ## Historias de Usuario
 
 ### Jugador
