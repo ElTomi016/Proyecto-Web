@@ -15,6 +15,17 @@ public class Jugador {
     @OneToMany(mappedBy = "jugador", cascade = CascadeType.ALL)
     private List<Barco> barcos;
 
+    public Jugador(String nombre, String email) {
+    this.nombre = nombre;
+    this.email = email;
+    }
+
+
+    public Jugador() {
+        //TODO Auto-generated constructor stub
+    }
+
+
     public Long getId() {
         return id;
     }

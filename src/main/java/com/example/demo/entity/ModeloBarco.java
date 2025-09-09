@@ -15,6 +15,17 @@ public class ModeloBarco {
     @OneToMany(mappedBy = "modelo", cascade = CascadeType.ALL)
     private List<Barco> barcos;
 
+    public ModeloBarco(String nombreModelo, String color) {
+    this.nombreModelo = nombreModelo;
+    this.color = color;
+    }
+
+
+    public ModeloBarco() {
+        //TODO Auto-generated constructor stub
+    }
+
+
     public Long getId() {
         return id;
     }

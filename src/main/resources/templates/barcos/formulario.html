@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulario Barco</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <h1 th:text="${barco.id} != null ? 'Editar Barco' : 'Nuevo Barco'"></h1>
+
+    <form th:action="${barco.id} != null ? @{/barcos/{id}(id=${barco.id})} : @{/barcos}" method="post" th:object="${barco}">
+        <label>posX:</label>
+        <input type="number" th:field="*{posX}" required />
+        <br/>
+        <label>posY:</label>
+        <input type="number" th:field="*{posY}" required />
+        <br/>
+        <label>Velocidad X:</label>
+        <input type="number" th:field="*{velocidadX}" />
+        <br/>
+        <label>Velocidad Y:</label>
+        <input type="number" th:field="*{velocidadY}" />
+        <br/>
+
+        <label>Jugador:</label>
+        <select name="jugadorId" required>
+            <option value="" disabled th:if="${selectedJugadorId == null}" selected>-- Seleccione jugador --</option>
+            <option th:each="j : ${jugadores}"
+                    th:value="${j.id}"
+                    th:text="${j.nombre}"
+                    th:selected="${j.id == selectedJugadorId}"></option>
+        </select>
+        <br/>
+
+        <label>Modelo:</label>
+        <select name="modeloId" required>
+            <option value="" disabled th:if="${selectedModeloId == null}" selected>-- Seleccione modelo --</option>
+            <option th:each="m : ${modelos}"
+                    th:value="${m.id}"
+                    th:text="${m.nombreModelo + ' ('+ m.color +')'}"
+                    th:selected="${m.id == selectedModeloId}"></option>
+        </select>
+        <br/>
+
+        <button type="submit">Guardar</button>
+    </form>
+    <a th:href="@{/barcos}">Volver</a>
+</body>
+</html>

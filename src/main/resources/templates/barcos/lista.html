@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Barcos</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <h1>Barcos</h1>
+    <a th:href="@{/}">Inicio</a> |
+    <a th:href="@{/barcos/nuevo}">Nuevo Barco</a>
+    <table>
+        <tr>
+            <th>ID</th><th>posX</th><th>posY</th><th>vX</th><th>vY</th><th>Jugador</th><th>Modelo</th><th>Acciones</th>
+        </tr>
+        <tr th:each="b : ${barcos}">
+            <td th:text="${b.id}"></td>
+            <td th:text="${b.posX}"></td>
+            <td th:text="${b.posY}"></td>
+            <td th:text="${b.velocidadX}"></td>
+            <td th:text="${b.velocidadY}"></td>
+            <td th:text="${b.jugador != null ? b.jugador.nombre : '—'}"></td>
+            <td th:text="${b.modelo != null ? b.modelo.nombreModelo : '—'}"></td>
+            <td>
+                <a th:href="@{/barcos/{id}/editar(id=${b.id})}">Editar</a> |
+                <a th:href="@{/barcos/{id}/eliminar(id=${b.id})}">Eliminar</a>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
