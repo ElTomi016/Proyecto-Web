@@ -1,0 +1,24 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Jugador</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+  <h1 th:text="${jugador.id} != null ? 'Editar Jugador' : 'Nuevo Jugador'"></h1>
+
+  <form th:action="${jugador.id} != null ? @{/jugadores/{id}(id=${jugador.id})} : @{/jugadores}"
+        method="post" th:object="${jugador}">
+    <label>Nombre:</label>
+    <input type="text" th:field="*{nombre}" required>
+    <br>
+    <label>Email:</label>
+    <input type="email" th:field="*{email}" required>
+    <br>
+    <button type="submit">Guardar</button>
+  </form>
+
+  <a th:href="@{/jugadores}">Volver</a>
+</body>
+</html>

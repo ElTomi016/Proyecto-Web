@@ -1,0 +1,29 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Modelos</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+  <h1>Modelos de Barco</h1>
+  <a th:href="@{/}">Inicio</a> |
+  <a th:href="@{/modelos/nuevo}">Nuevo Modelo</a>
+
+  <table>
+    <thead>
+      <tr><th>Nombre</th><th>Color</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="m : ${modelos}">
+        <td th:text="${m.nombreModelo}">nombre</td>
+        <td th:text="${m.color}">color</td>
+        <td>
+          <a th:href="@{/modelos/{id}/editar(id=${m.id})}">Editar</a> |
+          <a th:href="@{/modelos/{id}/eliminar(id=${m.id})}">Eliminar</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>

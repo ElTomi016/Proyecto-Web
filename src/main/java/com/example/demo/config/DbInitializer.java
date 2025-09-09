@@ -35,19 +35,19 @@ public class DbInitializer {
         // Jugadores
         List<Jugador> jugadores = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
-            Jugador j = new Jugador("Jugador " + i, "jugador" + i + "@mail.com");
+            Jugador j = new Jugador("Jugador " + i, "jugador" + i + "@correo.com");
             jugadores.add(jugadorRepo.save(j));
         }
 
         // Modelos
-        String[] colores = {"Rojo", "Azul", "Verde", "Amarillo", "Negro", "Blanco", "Gris", "Naranja", "Morado", "Cian"};
+        String[] colores = {"Rojo", "Azul", "Verde", "Amarillo", "Negro", "Blanco", "Gris", "Naranja", "Morado", "Café"};
         List<ModeloBarco> modelos = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
             ModeloBarco m = new ModeloBarco("Modelo " + i, colores[(i-1) % colores.length]);
             modelos.add(modeloRepo.save(m));
         }
 
-        // Mapa simple 10x10 y algunas paredes, partida y meta
+        
         Mapa mapa = new Mapa(10, 10);
         mapa = mapaRepo.save(mapa);
         for (int x = 0; x < 10; x++) {
