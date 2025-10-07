@@ -3,6 +3,8 @@ package com.example.demo.entity;
 import jakarta.persistence.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class ModeloBarco {
     @Id
@@ -12,7 +14,8 @@ public class ModeloBarco {
     private String nombreModelo;
     private String color;
 
-    @OneToMany(mappedBy = "modelo", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "modelo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Barco> barcos;
 
     public ModeloBarco(String nombreModelo, String color) {
