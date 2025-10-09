@@ -1,0 +1,26 @@
+<h2>Modelos de Barco</h2>
+
+<button (click)="irNuevo()">Nuevo modelo</button>
+
+<div *ngIf="loading" style="margin-top:8px;">Cargando...</div>
+<div *ngIf="!loading && error" style="color:red;margin-top:8px;">{{ error }}</div>
+
+<table *ngIf="!loading && !error && modelos?.length"
+       border="1" cellpadding="6" style="margin-top:12px;border-collapse:collapse;">
+  <thead>
+    <tr><th>ID</th><th>Nombre</th><th>Color</th><th>Acciones</th></tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let m of modelos">
+      <td>{{ m.id }}</td>
+      <td>{{ m.nombreModelo }}</td>
+      <td>{{ m.color }}</td>
+      <td>
+        <button (click)="irEditar(m.id)">Editar</button>
+        <button (click)="eliminar(m.id)">Eliminar</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p *ngIf="!loading && !error && !modelos?.length">No hay modelos.</p>

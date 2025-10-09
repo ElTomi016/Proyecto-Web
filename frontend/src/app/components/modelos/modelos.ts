@@ -1,39 +1,38 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { JugadorService, Jugador } from '../../services/jugador.service';
+import { ModeloBarcoService, ModeloBarco } from '../../services/modelo-barco.service';
 import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-jugadores',
+  selector: 'app-modelos',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './jugadores.html',
-  styleUrls: ['./jugadores.css']
+  templateUrl: './modelos.html',
+  styleUrls: ['./modelos.css']
 })
-export class JugadoresComponent implements OnInit {
-  jugadores: Jugador[] = [];
+export class ModelosComponent implements OnInit {
+  modelos: ModeloBarco[] = [];
   loading = false;
   error = '';
 
-  constructor(private api: JugadorService, private router: Router) {}
+  constructor(private api: ModeloBarcoService, private router: Router) {}
 
   ngOnInit(): void { this.cargar(); }
 
   cargar(): void {
     this.loading = true; this.error = '';
     this.api.getAll().subscribe({
-      next: data => this.jugadores = data,
+      next: data => this.modelos = data,
       error: () => this.error = 'No se pudo cargar la lista.',
       complete: () => this.loading = false
     });
   }
 
-  irNuevo(): void { this.router.navigateByUrl('/jugadores/nuevo'); }
-  irEditar(id?: number): void { if (id) this.router.navigate(['/jugadores', id, 'editar']); }
+  irNuevo(): void { this.router.navigateByUrl('/modelos/nuevo'); }
+  irEditar(id?: number): void { if (id) this.router.navigate(['/modelos', id, 'editar']); }
 
   eliminar(id?: number): void {
-    if (!id) return;
-    if (!confirm('¿Eliminar jugador?')) return;
+    if (!id || !confirm('¿Eliminar modelo?')) return;
     this.loading = true;
     this.api.delete(id).subscribe({
       next: () => this.cargar(),

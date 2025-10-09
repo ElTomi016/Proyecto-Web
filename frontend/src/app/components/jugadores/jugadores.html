@@ -1,7 +1,26 @@
-<h2>Lista de Jugadores</h2>
+<h2>Jugadores</h2>
 
-<ul>
-  <li *ngFor="let j of jugadores">
-    {{ j.id }} - {{ j.nombre }} ({{ j.email }})
-  </li>
-</ul>
+<button (click)="irNuevo()">Nuevo jugador</button>
+
+<div *ngIf="loading" style="margin-top:8px;">Cargando...</div>
+<div *ngIf="!loading && error" style="color:red;margin-top:8px;">{{ error }}</div>
+
+<table *ngIf="!loading && !error && jugadores?.length"
+       border="1" cellpadding="6" style="margin-top:12px;border-collapse:collapse;">
+  <thead>
+    <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Acciones</th></tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let j of jugadores">
+      <td>{{ j.id }}</td>
+      <td>{{ j.nombre }}</td>
+      <td>{{ j.email }}</td>
+      <td>
+        <button (click)="irEditar(j.id)">Editar</button>
+        <button (click)="eliminar(j.id)">Eliminar</button>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p *ngIf="!loading && !error && !jugadores?.length">No hay jugadores.</p>

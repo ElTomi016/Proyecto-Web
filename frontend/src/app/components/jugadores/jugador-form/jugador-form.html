@@ -1,0 +1,21 @@
+<h2>{{ titulo }}</h2>
+
+<div *ngIf="loading">Cargando...</div>
+<div *ngIf="!loading && error" style="color:red;">{{ error }}</div>
+
+<form *ngIf="!loading" (ngSubmit)="guardar()" style="display:grid;gap:12px;max-width:420px;">
+  <div>
+    <label>Nombre</label><br />
+    <input [(ngModel)]="model.nombre" name="nombre" required />
+  </div>
+
+  <div>
+    <label>Email</label><br />
+    <input [(ngModel)]="model.email" name="email" required />
+  </div>
+
+  <div style="display:flex;gap:8px;">
+    <button type="submit">{{ id ? 'Actualizar' : 'Crear' }}</button>
+    <button type="button" (click)="cancelar()">Cancelar</button>
+  </div>
+</form>
