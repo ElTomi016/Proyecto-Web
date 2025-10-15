@@ -1,0 +1,38 @@
+<header class="topbar">
+  <div class="brand">Regata Online</div>
+  <button class="outline">Salir</button>
+</header>
+
+<main class="container">
+  <h1>Panel de administración</h1>
+
+  <section class="cards">
+    <!-- Modelos de Barco -->
+    <article class="card">
+      <h2>Modelos de Barco</h2>
+      <p>Gestiona los tipos de barcos que pueden participar en la regata.</p>
+      <button class="primary" (click)="goModelos()">Entrar</button>
+    </article>
+
+    <!-- Jugadores -->
+    <article class="card">
+      <h2>Jugadores</h2>
+      <p>Administra la información de todos los participantes inscritos.</p>
+      <button class="primary" (click)="goJugadores()">Entrar</button>
+    </article>
+
+    <!-- Barcos -->
+    <article class="card">
+      <h2>Barcos</h2>
+      <p>Supervisa y gestiona los barcos registrados en la competición.</p>
+      <button class="primary" (click)="goBarcos()">Entrar</button>
+    </article>
+
+    <!-- Mapa solo lectura -->
+    <article class="card">
+      <h2>Mapa (solo lectura)</h2>
+      <p>Visualiza el recorrido de la regata y la posición de los barcos.</p>
+      <button class="ghost" (click)="goMapa()">Entrar</button>
+    </article>
+  </section>
+</main>

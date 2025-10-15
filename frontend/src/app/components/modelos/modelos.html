@@ -1,26 +1,37 @@
-<h2>Modelos de Barco</h2>
+<app-topbar></app-topbar>
 
-<button (click)="irNuevo()">Nuevo modelo</button>
+<main class="page-wrap">
+  <div class="title-row">
+    <h1>Modelos de Barco</h1>
+    <button class="btn primary" (click)="irNuevo()">+ Nuevo Modelo</button>
+  </div>
 
-<div *ngIf="loading" style="margin-top:8px;">Cargando...</div>
-<div *ngIf="!loading && error" style="color:red;margin-top:8px;">{{ error }}</div>
+  <div *ngIf="loading" class="state">Cargando…</div>
+  <div *ngIf="!loading && error" class="state error">{{ error }}</div>
 
-<table *ngIf="!loading && !error && modelos?.length"
-       border="1" cellpadding="6" style="margin-top:12px;border-collapse:collapse;">
-  <thead>
-    <tr><th>ID</th><th>Nombre</th><th>Color</th><th>Acciones</th></tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let m of modelos">
-      <td>{{ m.id }}</td>
-      <td>{{ m.nombreModelo }}</td>
-      <td>{{ m.color }}</td>
-      <td>
-        <button (click)="irEditar(m.id)">Editar</button>
-        <button (click)="eliminar(m.id)">Eliminar</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+  <section class="card" *ngIf="!loading && !error">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th style="width:80px;">ID</th>
+          <th>Nombre del Modelo</th>
+          <th style="width:260px;">Color</th>
+          <th style="width:240px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of modelos">
+          <td>{{ m.id }}</td>
+          <td>{{ m.nombreModelo }}</td>
+          <td>{{ m.color }}</td>
+          <td class="row-actions">
+            <button class="btn subtle" (click)="irEditar(m.id)">✎ Editar</button>
+            <button class="btn outline danger" (click)="eliminar(m.id)">🗑️ Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-<p *ngIf="!loading && !error && !modelos?.length">No hay modelos.</p>
+    <p *ngIf="!modelos?.length" class="empty">No hay modelos.</p>
+  </section>
+</main>
