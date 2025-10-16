@@ -1,47 +1,34 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { JugadorService, Jugador } from '../../services/jugador.service';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-jugadores',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NgIf, NgFor, RouterLink],  // ← IMPORTANTE
   templateUrl: './jugadores.html',
   styleUrls: ['./jugadores.css']
 })
 export class JugadoresComponent implements OnInit {
   jugadores: Jugador[] = [];
-  loading = false;
+  loading = true;
   error = '';
 
-  constructor(private api: JugadorService, private router: Router) {}
+  constructor(private srv: JugadorService) {}
 
-  ngOnInit(): void { this.cargar(); }
+  ngOnInit(): void {
+    this.srv.getAll().subscribe({
+      next: (data) => { this.jugadores = data ?? []; this.loading = false; },
+      error: () => { this.error = 'No se pudo cargar la lista.'; this.loading = false; }
+    });
+  }
 
-  cargar(): void {
-  this.loading = true; this.error = '';
-  this.api.getAll().subscribe({
-    next: d => this.jugadores = d,
-    error: (err) => {
-      console.error('Jugadores getAll error', err);
-      this.error = 'No se pudo cargar la lista.';
-      this.loading = false;              // <- aquí también
-    },
-    complete: () => this.loading = false
-  });
-}
-
-  irNuevo(): void { this.router.navigateByUrl('/jugadores/nuevo'); }
-  irEditar(id?: number): void { if (id) this.router.navigate(['/jugadores', id, 'editar']); }
-
-  eliminar(id?: number): void {
-    if (!id) return;
-    if (!confirm('¿Eliminar jugador?')) return;
-    this.loading = true;
-    this.api.delete(id).subscribe({
-      next: () => this.cargar(),
-      error: () => { this.error = 'No se pudo eliminar.'; this.loading = false; }
+  remove(id: number) {
+    if (!confirm('¿Eliminar?')) return;
+    this.srv.delete(id).subscribe({
+      next: () => { this.jugadores = this.jugadores.filter(j => j.id !== id); },
+      error: () => { this.error = 'No se pudo eliminar.'; }
     });
   }
 }

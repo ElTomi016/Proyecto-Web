@@ -1,26 +1,31 @@
-<h2>Jugadores</h2>
+<section class="page">
+  <div class="header">
+    <h1>Lista de Jugadores</h1>
+    <button class="btn-primary" [routerLink]="['/admin/jugadores','nuevo']">+ Nuevo Jugador</button>
+  </div>
 
-<button (click)="irNuevo()">Nuevo jugador</button>
+  <div *ngIf="loading">Cargando...</div>
+  <div class="error" *ngIf="!loading && error">{{ error }}</div>
 
-<div *ngIf="loading" style="margin-top:8px;">Cargando...</div>
-<div *ngIf="!loading && error" style="color:red;margin-top:8px;">{{ error }}</div>
-
-<table *ngIf="!loading && !error && jugadores?.length"
-       border="1" cellpadding="6" style="margin-top:12px;border-collapse:collapse;">
-  <thead>
-    <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Acciones</th></tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let j of jugadores">
-      <td>{{ j.id }}</td>
-      <td>{{ j.nombre }}</td>
-      <td>{{ j.email }}</td>
-      <td>
-        <button (click)="irEditar(j.id)">Editar</button>
-        <button (click)="eliminar(j.id)">Eliminar</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<p *ngIf="!loading && !error && !jugadores?.length">No hay jugadores.</p>
+  <table *ngIf="!loading && !error" class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th style="width:160px;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let j of jugadores">
+        <td>{{ j.id }}</td>
+        <td>{{ j.nombre }}</td>
+        <td>{{ j.email }}</td>
+        <td>
+          <button class="btn" [routerLink]="['/admin/jugadores', j.id, 'editar']">Editar</button>
+          <button class="btn-danger" (click)="remove(j.id)">Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>

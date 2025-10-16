@@ -1,12 +1,17 @@
 import { Routes } from '@angular/router';
 
+// Panel de administración
 import { AdminComponent } from './components/admin/admin';
+
+// CRUD Jugadores
 import { JugadoresComponent } from './components/jugadores/jugadores';
 import { JugadorFormComponent } from './components/jugadores/jugador-form/jugador-form';
 
+// CRUD Modelos
 import { ModelosComponent } from './components/modelos/modelos';
-import { ModeloFormComponent } from './components/modelos/modelo-form/modelo-form';
+import { ModelosFormComponent } from './components/modelos/modelo-form/modelo-form';
 
+// CRUD Barcos
 import { BarcosComponent } from './components/barcos/barcos';
 import { BarcoFormComponent } from './components/barcos/barco-form/barco-form';
 
@@ -15,17 +20,20 @@ export const routes: Routes = [
 
   { path: 'admin', component: AdminComponent },
 
-  { path: 'jugadores', component: JugadoresComponent },
-  { path: 'jugadores/nuevo', component: JugadorFormComponent },
-  { path: 'jugadores/:id/editar', component: JugadorFormComponent },
+  // Jugadores
+  { path: 'admin/jugadores', component: JugadoresComponent },
+  { path: 'admin/jugadores/nuevo', component: JugadorFormComponent },
+  { path: 'admin/jugadores/:id/editar', component: JugadorFormComponent },
 
-  { path: 'modelos', component: ModelosComponent },
-  { path: 'modelos/nuevo', component: ModeloFormComponent },
-  { path: 'modelos/:id/editar', component: ModeloFormComponent },
+  // Modelos de Barco
+  { path: 'admin/modelos', component: ModelosComponent },
+  { path: 'admin/modelos/nuevo', component: ModelosFormComponent },
+  { path: 'admin/modelos/:id/editar', component: ModelosFormComponent },
 
-  { path: 'barcos', component: BarcosComponent },
-  { path: 'barcos/nuevo', component: BarcoFormComponent },
-  { path: 'barcos/:id/editar', component: BarcoFormComponent },
+  // Barcos
+  { path: 'admin/barcos', component: BarcosComponent },
+  { path: 'admin/barcos/nuevo', component: BarcoFormComponent },
+  { path: 'admin/barcos/:id/editar', component: BarcoFormComponent },
 
   { path: '**', redirectTo: 'admin' }
 ];

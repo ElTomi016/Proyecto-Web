@@ -1,42 +1,31 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
     <header class="topbar">
-      <div class="brand" (click)="go('/admin', $event)" title="Ir al Panel">
-        <span class="dot"></span>
-        <span class="name">Regata Online</span>
-      </div>
-
-      <nav class="menu">
-        <a [class.active]="isActive('/admin')"     (click)="go('/admin', $event)">Inicio</a>
-        <a [class.active]="isActive('/modelos')"   (click)="go('/modelos', $event)">Modelos</a>
-        <a [class.active]="isActive('/barcos')"    (click)="go('/barcos', $event)">Barcos</a>
-        <a [class.active]="isActive('/jugadores')" (click)="go('/jugadores', $event)">Participantes</a>
+      <div class="brand">Regata Online</div>
+      <nav class="nav">
+        <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Inicio</a>
+        <a routerLink="/admin/modelos" routerLinkActive="active">Modelos</a>
+        <a routerLink="/admin/barcos" routerLinkActive="active">Barcos</a>
+        <a routerLink="/admin/jugadores" routerLinkActive="active">Jugadores</a>
       </nav>
-
-      <div class="actions">
-        <button class="outline" type="button">Salir</button>
-      </div>
     </header>
   `,
-  styleUrls: ['./topbar.css']
+  styles: [`
+    .topbar {
+      position: sticky; top: 0; z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between;
+      background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 12px 24px;
+    }
+    .brand { font-weight: 700; color: #111827; }
+    .nav a { margin: 0 12px; color: #374151; text-decoration: none; }
+    .nav a.active { color: #1d4ed8; border-bottom: 2px solid #1d4ed8; padding-bottom: 4px; }
+  `]
 })
-export class TopbarComponent {
-  private router = inject(Router);
-
-  go(path: string, ev?: Event) {
-    ev?.preventDefault();
-    this.router.navigateByUrl(path);
-  }
-
-  isActive(prefix: string): boolean {
-    const url = this.router.url || '';
-    return url === prefix || url.startsWith(prefix + '/');
-  }
-}
+export class TopbarComponent {}

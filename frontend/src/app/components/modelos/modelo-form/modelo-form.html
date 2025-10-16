@@ -1,43 +1,24 @@
-<app-topbar></app-topbar>
+<section class="panel">
+  <header class="panel__head">
+    <h2>{{ titulo }}</h2>
+  </header>
 
-<main class="page-wrap">
-  <div class="title-row">
-    <h1>{{ id ? 'Editar modelo de barco' : 'Crear modelo de barco' }}</h1>
-  </div>
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="form">
+    <label>
+      <span>Nombre del modelo</span>
+      <input type="text" formControlName="nombreModelo" />
+    </label>
 
-  <div *ngIf="loading" class="state">Cargando…</div>
-  <div *ngIf="!loading && error" class="state error">{{ error }}</div>
+    <label>
+      <span>Color</span>
+      <input type="color" formControlName="color" />
+    </label>
 
-  <section class="card" *ngIf="!loading">
-    <form (ngSubmit)="guardar()" #f="ngForm">
-      <div class="form-row">
-        <label for="nombreModelo">Nombre del modelo</label>
-        <input
-          id="nombreModelo"
-          name="nombreModelo"
-          type="text"
-          [(ngModel)]="model.nombreModelo"
-          required
-        />
-      </div>
+    <div class="form__actions">
+      <button type="submit" class="btn btn--primary" [disabled]="loading">Guardar</button>
+      <button type="button" class="btn" (click)="cancelar()">Cancelar</button>
+    </div>
 
-      <div class="form-row">
-        <label for="color">Color</label>
-        <input
-          id="color"
-          name="color"
-          type="text"
-          [(ngModel)]="model.color"
-          required
-        />
-      </div>
-
-      <div class="actions">
-        <button type="button" class="btn" (click)="volver()">Cancelar</button>
-        <button type="submit" class="btn primary" [disabled]="f.invalid || loading">
-          {{ id ? 'Guardar cambios' : 'Crear modelo' }}
-        </button>
-      </div>
-    </form>
-  </section>
-</main>
+    <div *ngIf="error" class="state state--error">{{ error }}</div>
+  </form>
+</section>

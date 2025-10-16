@@ -1,37 +1,22 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface ModeloBarco {
-  id: number;              // <-- obligatorio (lo devuelve el backend)
+  id: number;
   nombreModelo: string;
   color: string;
 }
 
-export type ModeloBarcoPayload = Omit<ModeloBarco, 'id'>;
-
 @Injectable({ providedIn: 'root' })
 export class ModeloBarcoService {
-  private http = inject(HttpClient);
-  private base = '/api/modelos';
+  private BASE = '/api/modelos';
 
-  getAll(): Observable<ModeloBarco[]> {
-    return this.http.get<ModeloBarco[]>(this.base);
-  }
+  constructor(private http: HttpClient) {}
 
-  getById(id: number): Observable<ModeloBarco> {
-    return this.http.get<ModeloBarco>(`${this.base}/${id}`);
-  }
-
-  create(body: ModeloBarcoPayload): Observable<ModeloBarco> {
-    return this.http.post<ModeloBarco>(this.base, body);
-  }
-
-  update(id: number, body: ModeloBarcoPayload): Observable<ModeloBarco> {
-    return this.http.put<ModeloBarco>(`${this.base}/${id}`, body);
-  }
-
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.base}/${id}`);
-  }
+  getAll(): Observable<ModeloBarco[]> { return this.http.get<ModeloBarco[]>(this.BASE); }
+  getById(id: number): Observable<ModeloBarco> { return this.http.get<ModeloBarco>(`${this.BASE}/${id}`); }
+  create(payload: Omit<ModeloBarco, 'id'>): Observable<ModeloBarco> { return this.http.post<ModeloBarco>(this.BASE, payload); }
+  update(id: number, payload: Omit<ModeloBarco, 'id'>): Observable<ModeloBarco> { return this.http.put<ModeloBarco>(`${this.BASE}/${id}`, payload); }
+  remove(id: number): Observable<void> { return this.http.delete<void>(`${this.BASE}/${id}`); }
 }

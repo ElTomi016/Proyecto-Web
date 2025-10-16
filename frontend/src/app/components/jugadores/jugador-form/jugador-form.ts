@@ -1,57 +1,94 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JugadorService, Jugador } from '../../../services/jugador.service';
+import { JugadorService } from '../../../services/jugador.service';
 
 @Component({
   selector: 'app-jugador-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './jugador-form.html',
-  styleUrls: ['./jugador-form.css']
+  imports: [CommonModule, ReactiveFormsModule],
+  template: `
+  <section class="card">
+    <header class="card-head">
+      <h1>{{ id ? 'Editar Jugador' : 'Nuevo Jugador' }}</h1>
+    </header>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-row">
+        <label>Nombre</label>
+        <input type="text" formControlName="nombre">
+      </div>
+      <div class="form-row">
+        <label>Email</label>
+        <input type="email" formControlName="email">
+      </div>
+      <div class="form-row">
+        <label>Teléfono</label>
+        <input type="text" formControlName="telefono">
+      </div>
+
+      <div class="actions">
+        <button class="btn" type="button" (click)="cancel()">Cancelar</button>
+        <button class="btn-primary" type="submit" [disabled]="form.invalid">Guardar</button>
+      </div>
+    </form>
+  </section>
+  `,
+  styles: [`
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px}
+    .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .form-row{display:flex;flex-direction:column;margin-bottom:12px}
+    label{font-weight:600;margin-bottom:6px}
+    input{border:1px solid #d1d5db;border-radius:8px;padding:10px}
+    .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+    .btn{border:1px solid #d1d5db;background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}
+    .btn:hover{background:#f3f4f6}
+    .btn-primary{background:#1d4ed8;color:#fff;border:none;border-radius:10px;padding:10px 16px;cursor:pointer}
+  `]
 })
 export class JugadorFormComponent implements OnInit {
-  titulo = 'Nuevo jugador';
-  id?: number;
-  model: Jugador = { nombre: '', email: '' };
-  loading = false;
-  error = '';
+  id: number | null = null;
+  form!: FormGroup;
 
   constructor(
+    private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
-    private api: JugadorService
-  ) {}
+    private api: JugadorService,
+    private router: Router
+  ) {
+    this.form = this.fb.nonNullable.group({
+      nombre: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      telefono: [''],
+    });
+  }
 
   ngOnInit(): void {
-    const p = this.route.snapshot.paramMap.get('id');
-    if (p) {
-      this.titulo = 'Editar jugador';
-      this.id = Number(p);
-      this.loading = true;
+    const param = this.route.snapshot.paramMap.get('id');
+    this.id = param ? Number(param) : null;
+
+    if (this.id) {
       this.api.getById(this.id).subscribe({
-        next: j => this.model = { nombre: j.nombre, email: j.email },
-        error: () => this.error = 'No se pudo cargar el jugador.',
-        complete: () => this.loading = false
+        next: j => this.form.setValue({
+          nombre: j.nombre,
+          email: j.email,
+          telefono: j.telefono ?? ''
+        }),
+        error: () => alert('No se pudo cargar el jugador'),
       });
     }
   }
 
-  guardar(): void {
-    if (!this.model.nombre || !this.model.email) {
-      this.error = 'Completa nombre y email.'; return;
-    }
-    this.loading = true; this.error = '';
-    const op = this.id
-      ? this.api.update(this.id, this.model)
-      : this.api.create(this.model);
+  save() {
+    const payload = this.form.getRawValue();
+    const req = this.id ? this.api.update(this.id, payload) : this.api.create(payload);
 
-    op.subscribe({
-      next: () => this.router.navigateByUrl('/jugadores'),
-      error: () => { this.error = 'No se pudo guardar.'; this.loading = false; }
+    req.subscribe({
+      next: () => this.router.navigateByUrl('/admin/jugadores'),
+      error: () => alert('No se pudo guardar'),
     });
   }
 
-  cancelar(): void { this.router.navigateByUrl('/jugadores'); }
+  cancel(){ this.router.navigateByUrl('/admin/jugadores'); }
 }

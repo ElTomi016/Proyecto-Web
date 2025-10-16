@@ -1,21 +1,29 @@
-<h2>{{ titulo }}</h2>
+<section class="panel">
+  <header class="panel__head">
+    <h2>{{ titulo }}</h2>
+  </header>
 
-<div *ngIf="loading">Cargando...</div>
-<div *ngIf="!loading && error" style="color:red;">{{ error }}</div>
+  <form [formGroup]="form" (ngSubmit)="guardar()" class="form">
+    <label>
+      <span>Nombre</span>
+      <input type="text" formControlName="nombre" />
+    </label>
 
-<form *ngIf="!loading" (ngSubmit)="guardar()" style="display:grid;gap:12px;max-width:420px;">
-  <div>
-    <label>Nombre</label><br />
-    <input [(ngModel)]="model.nombre" name="nombre" required />
-  </div>
+    <label>
+      <span>Email</span>
+      <input type="email" formControlName="email" />
+    </label>
 
-  <div>
-    <label>Email</label><br />
-    <input [(ngModel)]="model.email" name="email" required />
-  </div>
+    <label>
+      <span>Teléfono</span>
+      <input type="text" formControlName="telefono" />
+    </label>
 
-  <div style="display:flex;gap:8px;">
-    <button type="submit">{{ id ? 'Actualizar' : 'Crear' }}</button>
-    <button type="button" (click)="cancelar()">Cancelar</button>
-  </div>
-</form>
+    <div class="form__actions">
+      <button type="submit" class="btn btn--primary" [disabled]="loading">Guardar</button>
+      <button type="button" class="btn" (click)="cancelar()">Cancelar</button>
+    </div>
+
+    <div *ngIf="error" class="state state--error">{{ error }}</div>
+  </form>
+</section>
