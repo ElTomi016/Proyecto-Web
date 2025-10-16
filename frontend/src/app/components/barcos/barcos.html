@@ -11,29 +11,40 @@
     <thead>
       <tr>
         <th>ID</th>
-        <th>JugadorId</th>
-        <th>ModeloId</th>
+        <th>Jugador</th>
+        <th>Modelo</th>
         <th>posX</th>
         <th>posY</th>
         <th>velocidadX</th>
         <th>velocidadY</th>
-        <th style="width:210px;text-align:right">Acciones</th>
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let b of barcos">
         <td>{{ b.id }}</td>
-        <td>{{ b.jugadorId }}</td>
-        <td>{{ b.modeloId }}</td>
+
+        <!-- Jugador -->
+        <td>{{ b.jugador?.nombre || b.jugador?.id || '—' }}</td>
+
+        <!-- Modelo (propiedad real en tu JSON: nombreModelo) -->
+        <td>{{ b.modelo?.nombreModelo || b.modelo?.id || '—' }}</td>
+
         <td>{{ b.posX }}</td>
         <td>{{ b.posY }}</td>
         <td>{{ b.velocidadX }}</td>
         <td>{{ b.velocidadY }}</td>
-        <td class="actions">
+
+        <td>
           <button class="btn" (click)="goEdit(b.id)">Editar</button>
-          <button class="btn-danger" (click)="remove(b.id)">Eliminar</button>
+          <button class="btn danger" (click)="onDelete(b.id)">Eliminar</button>
         </td>
       </tr>
     </tbody>
   </table>
+
+  <!-- DEBUG (temporal): comenta o elimina cuando verifiques -->
+  <pre style="white-space: pre-wrap; background:#fafafa; padding:8px; border:1px solid #eee;">
+{{ barcos | json }}
+  </pre>
 </section>

@@ -2,14 +2,26 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface JugadorRef {
+  id: number;
+  nombre: string;
+  email: string;
+}
+
+export interface ModeloRef {
+  id: number;
+  nombreModelo: string;
+  color: string;
+}
+
 export interface Barco {
   id: number;
-  jugadorId: number;
-  modeloId: number;
   posX: number;
   posY: number;
   velocidadX: number;
   velocidadY: number;
+  jugador?: JugadorRef | null;
+  modelo?:  ModeloRef  | null;
 }
 
 @Injectable({ providedIn: 'root' })

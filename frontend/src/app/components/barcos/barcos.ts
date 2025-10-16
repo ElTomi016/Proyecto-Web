@@ -1,40 +1,61 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { Barco, BarcoService } from '../../services/barco.service';
+import { BarcoService, Barco } from '../../services/barco.service';
 
 @Component({
   selector: 'app-barcos',
-  standalone: true,
-  imports: [CommonModule],
   templateUrl: './barcos.html',
-  styleUrls: ['../jugadores/jugadores.css']
+  styleUrls: ['./barcos.css']
 })
 export class BarcosComponent implements OnInit {
+
   barcos: Barco[] = [];
   loading = true;
   error = '';
 
-  constructor(private api: BarcoService, private router: Router){}
+  constructor(
+    private srv: BarcoService,
+    private router: Router
+  ) {}
 
-  ngOnInit(): void { this.refresh(); }
+  ngOnInit(): void {
+    this.cargar();
+  }
 
-  refresh(){
+  private cargar(): void {
     this.loading = true;
-    this.api.getAll().subscribe({
-      next: d => { this.barcos = d ?? []; this.loading = false; },
-      error: () => { this.error = 'No se pudo cargar la lista.'; this.loading = false; }
+    this.error = '';
+
+    this.srv.getAll().subscribe({
+      next: (data) => {
+        // NO transformar; dejamos las relaciones tal cual vienen del backend
+        this.barcos = data ?? [];
+        this.loading = false;
+      },
+      error: (e) => {
+        console.error('Error listando barcos', e);
+        this.error = 'No se pudo cargar la lista.';
+        this.loading = false;
+      }
     });
   }
 
-  goNew(){ this.router.navigateByUrl('/admin/barcos/nuevo'); }
-  goEdit(id: number){ this.router.navigateByUrl(`/admin/barcos/${id}/editar`); }
+  goNew(): void {
+    this.router.navigate(['/admin/barcos/nuevo']);
+  }
 
-  remove(id: number){
-    if(!confirm('¿Eliminar barco?')) return;
-    this.api.remove(id).subscribe({
-      next: () => this.refresh(),
-      error: () => alert('No se pudo eliminar'),
+  goEdit(id: number): void {
+    this.router.navigate(['/admin/barcos', id, 'editar']);
+  }
+
+  onDelete(id: number): void {
+    if (!confirm('¿Eliminar barco?')) { return; }
+    this.srv.remove(id).subscribe({
+      next: () => this.cargar(),
+      error: (e) => {
+        console.error('Error eliminando', e);
+        this.error = 'No se pudo eliminar.';
+      }
     });
   }
 }
