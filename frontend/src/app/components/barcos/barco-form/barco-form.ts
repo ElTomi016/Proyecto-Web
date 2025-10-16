@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+
+import { TopbarComponent } from '../../../shared/topbar/topbar';
 import { BarcoService, Barco, BarcoPayload } from '../../../services/barco.service';
 import { JugadorService, Jugador } from '../../../services/jugador.service';
 import { ModeloBarcoService, ModeloBarco } from '../../../services/modelo-barco.service';
@@ -9,7 +11,7 @@ import { ModeloBarcoService, ModeloBarco } from '../../../services/modelo-barco.
 @Component({
   selector: 'app-barco-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TopbarComponent],
   templateUrl: './barco-form.html',
   styleUrls: ['./barco-form.css']
 })

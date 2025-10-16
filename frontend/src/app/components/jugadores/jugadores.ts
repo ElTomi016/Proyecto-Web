@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { JugadorService, Jugador } from '../../services/jugador.service';
 import { Router } from '@angular/router';
+
+import { TopbarComponent } from '../../shared/topbar/topbar';
+import { JugadorService, Jugador } from '../../services/jugador.service';
 
 @Component({
   selector: 'app-jugadores',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TopbarComponent],
   templateUrl: './jugadores.html',
   styleUrls: ['./jugadores.css']
 })
@@ -20,17 +22,18 @@ export class JugadoresComponent implements OnInit {
   ngOnInit(): void { this.cargar(); }
 
   cargar(): void {
-  this.loading = true; this.error = '';
-  this.api.getAll().subscribe({
-    next: d => this.jugadores = d,
-    error: (err) => {
-      console.error('Jugadores getAll error', err);
-      this.error = 'No se pudo cargar la lista.';
-      this.loading = false;              // <- aquí también
-    },
-    complete: () => this.loading = false
-  });
-}
+    this.loading = true;
+    this.error = '';
+    this.api.getAll().subscribe({
+      next: (d) => (this.jugadores = d),
+      error: (err) => {
+        console.error('Jugadores getAll error', err);
+        this.error = 'No se pudo cargar la lista.';
+        this.loading = false;
+      },
+      complete: () => (this.loading = false)
+    });
+  }
 
   irNuevo(): void { this.router.navigateByUrl('/jugadores/nuevo'); }
   irEditar(id?: number): void { if (id) this.router.navigate(['/jugadores', id, 'editar']); }

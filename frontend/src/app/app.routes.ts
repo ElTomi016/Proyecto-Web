@@ -10,6 +10,8 @@ import { ModeloFormComponent } from './components/modelos/modelo-form/modelo-for
 import { BarcosComponent } from './components/barcos/barcos';
 import { BarcoFormComponent } from './components/barcos/barco-form/barco-form';
 
+import { MapaComponent } from './components/mapa/mapa';
+
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'admin' },
 
@@ -26,6 +28,8 @@ export const routes: Routes = [
   { path: 'barcos', component: BarcosComponent },
   { path: 'barcos/nuevo', component: BarcoFormComponent },
   { path: 'barcos/:id/editar', component: BarcoFormComponent },
+
+  { path: 'mapa', component: MapaComponent },
 
   { path: '**', redirectTo: 'admin' }
 ];

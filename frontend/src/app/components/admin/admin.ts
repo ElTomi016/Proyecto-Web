@@ -2,10 +2,12 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
+import { TopbarComponent } from '../../shared/topbar/topbar';
+
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TopbarComponent],
   templateUrl: './admin.html',
   styleUrls: ['./admin.css']
 })

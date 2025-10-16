@@ -1,8 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import type { Jugador } from './jugador.service';
 import type { ModeloBarco } from './modelo-barco.service';
+
+import { API_BASE_URL } from './api.config';
 
 export interface Barco {
   id?: number;
@@ -25,9 +27,8 @@ export interface BarcoPayload {
 
 @Injectable({ providedIn: 'root' })
 export class BarcoService {
-  private apiUrl = 'http://localhost:8080/api/barcos';
-
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+  private apiUrl = `${API_BASE_URL}/barcos`;
 
   getAll(): Observable<Barco[]> { return this.http.get<Barco[]>(this.apiUrl); }
   getById(id: number): Observable<Barco> { return this.http.get<Barco>(`${this.apiUrl}/${id}`); }

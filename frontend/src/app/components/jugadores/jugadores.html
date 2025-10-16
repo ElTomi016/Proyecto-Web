@@ -1,26 +1,39 @@
-<h2>Jugadores</h2>
+<app-topbar></app-topbar>
 
-<button (click)="irNuevo()">Nuevo jugador</button>
+<main class="page-wrap">
+  <div class="title-row">
+    <h1>Jugadores</h1>
+    <button class="btn primary" (click)="irNuevo()">+ Nuevo Jugador</button>
+  </div>
 
-<div *ngIf="loading" style="margin-top:8px;">Cargando...</div>
-<div *ngIf="!loading && error" style="color:red;margin-top:8px;">{{ error }}</div>
+  <div *ngIf="loading" class="state">Cargando…</div>
+  <div *ngIf="!loading && error" class="state error">{{ error }}</div>
 
-<table *ngIf="!loading && !error && jugadores?.length"
-       border="1" cellpadding="6" style="margin-top:12px;border-collapse:collapse;">
-  <thead>
-    <tr><th>ID</th><th>Nombre</th><th>Email</th><th>Acciones</th></tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let j of jugadores">
-      <td>{{ j.id }}</td>
-      <td>{{ j.nombre }}</td>
-      <td>{{ j.email }}</td>
-      <td>
-        <button (click)="irEditar(j.id)">Editar</button>
-        <button (click)="eliminar(j.id)">Eliminar</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+  <section class="card" *ngIf="!loading && !error">
+    <table class="tbl" *ngIf="jugadores?.length; else empty">
+      <thead>
+        <tr>
+          <th style="width:80px;">ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th style="width:220px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let j of jugadores">
+          <td>{{ j.id }}</td>
+          <td>{{ j.nombre }}</td>
+          <td>{{ j.email }}</td>
+          <td class="row-actions">
+            <button class="btn subtle" (click)="irEditar(j.id)">✎ Editar</button>
+            <button class="btn outline danger" (click)="eliminar(j.id)">🗑️ Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-<p *ngIf="!loading && !error && !jugadores?.length">No hay jugadores.</p>
+    <ng-template #empty>
+      <p class="empty">No hay jugadores registrados.</p>
+    </ng-template>
+  </section>
+</main>

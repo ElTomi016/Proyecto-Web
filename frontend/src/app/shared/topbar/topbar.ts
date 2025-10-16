@@ -21,7 +21,7 @@ import { Router } from '@angular/router';
       </nav>
 
       <div class="actions">
-        <button class="outline" type="button">Salir</button>
+        <button class="outline" type="button" (click)="salir()">Salir</button>
       </div>
     </header>
   `,
@@ -38,5 +38,10 @@ export class TopbarComponent {
   isActive(prefix: string): boolean {
     const url = this.router.url || '';
     return url === prefix || url.startsWith(prefix + '/');
+  }
+
+  salir(): void {
+    // En esta demo simplemente volvemos al inicio.
+    this.router.navigateByUrl('/');
   }
 }

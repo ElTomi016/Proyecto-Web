@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { API_BASE_URL } from './api.config';
+
 export interface ModeloBarco {
   id: number;              // <-- obligatorio (lo devuelve el backend)
   nombreModelo: string;
@@ -13,7 +15,7 @@ export type ModeloBarcoPayload = Omit<ModeloBarco, 'id'>;
 @Injectable({ providedIn: 'root' })
 export class ModeloBarcoService {
   private http = inject(HttpClient);
-  private base = '/api/modelos';
+  private base = `${API_BASE_URL}/modelos`;
 
   getAll(): Observable<ModeloBarco[]> {
     return this.http.get<ModeloBarco[]>(this.base);

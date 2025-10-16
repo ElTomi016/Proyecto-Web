@@ -1,6 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
+import { API_BASE_URL } from './api.config';
 
 export interface Jugador {
   id?: number;
@@ -10,9 +12,8 @@ export interface Jugador {
 
 @Injectable({ providedIn: 'root' })
 export class JugadorService {
-  private apiUrl = 'http://localhost:8080/api/jugadores';
-
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+  private apiUrl = `${API_BASE_URL}/jugadores`;
 
   getAll(): Observable<Jugador[]> { return this.http.get<Jugador[]>(this.apiUrl); }
   getById(id: number): Observable<Jugador> { return this.http.get<Jugador>(`${this.apiUrl}/${id}`); }

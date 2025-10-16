@@ -2,12 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+
+import { TopbarComponent } from '../../../shared/topbar/topbar';
 import { JugadorService, Jugador } from '../../../services/jugador.service';
 
 @Component({
   selector: 'app-jugador-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TopbarComponent],
   templateUrl: './jugador-form.html',
   styleUrls: ['./jugador-form.css']
 })

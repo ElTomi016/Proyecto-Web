@@ -1,21 +1,43 @@
-<h2>{{ titulo }}</h2>
+<app-topbar></app-topbar>
 
-<div *ngIf="loading">Cargando...</div>
-<div *ngIf="!loading && error" style="color:red;">{{ error }}</div>
-
-<form *ngIf="!loading" (ngSubmit)="guardar()" style="display:grid;gap:12px;max-width:420px;">
-  <div>
-    <label>Nombre</label><br />
-    <input [(ngModel)]="model.nombre" name="nombre" required />
+<main class="page-wrap">
+  <div class="title-row">
+    <h1>{{ id ? 'Editar jugador' : 'Nuevo jugador' }}</h1>
   </div>
 
-  <div>
-    <label>Email</label><br />
-    <input [(ngModel)]="model.email" name="email" required />
-  </div>
+  <div *ngIf="loading" class="state">Cargando…</div>
+  <div *ngIf="!loading && error" class="state error">{{ error }}</div>
 
-  <div style="display:flex;gap:8px;">
-    <button type="submit">{{ id ? 'Actualizar' : 'Crear' }}</button>
-    <button type="button" (click)="cancelar()">Cancelar</button>
-  </div>
-</form>
+  <section class="card" *ngIf="!loading">
+    <form (ngSubmit)="guardar()" #f="ngForm">
+      <div class="form-row">
+        <label for="nombre">Nombre</label>
+        <input
+          id="nombre"
+          name="nombre"
+          type="text"
+          [(ngModel)]="model.nombre"
+          required
+        />
+      </div>
+
+      <div class="form-row">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          [(ngModel)]="model.email"
+          required
+        />
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="f.invalid || loading">
+          {{ id ? 'Guardar cambios' : 'Crear jugador' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</main>

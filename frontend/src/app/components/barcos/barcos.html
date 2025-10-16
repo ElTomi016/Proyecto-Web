@@ -1,33 +1,47 @@
-<h2>Barcos</h2>
+<app-topbar></app-topbar>
 
-<button (click)="irNuevo()">Nuevo barco</button>
+<main class="page-wrap">
+  <div class="title-row">
+    <h1>Barcos registrados</h1>
+    <button class="btn primary" (click)="irNuevo()">+ Nuevo Barco</button>
+  </div>
 
-<div *ngIf="loading" style="margin-top:8px;">Cargando...</div>
-<div *ngIf="!loading && error" style="color:red;margin-top:8px;">{{ error }}</div>
+  <div *ngIf="loading" class="state">Cargando…</div>
+  <div *ngIf="!loading && error" class="state error">{{ error }}</div>
 
-<table *ngIf="!loading && !error && barcos?.length"
-       border="1" cellpadding="6" style="margin-top:12px;border-collapse:collapse;">
-  <thead>
-    <tr>
-      <th>ID</th><th>PosX</th><th>PosY</th><th>VelX</th><th>VelY</th>
-      <th>Jugador</th><th>Modelo</th><th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let b of barcos">
-      <td>{{ b.id }}</td>
-      <td>{{ b.posX }}</td>
-      <td>{{ b.posY }}</td>
-      <td>{{ b.velocidadX }}</td>
-      <td>{{ b.velocidadY }}</td>
-      <td>{{ b.jugador?.nombre }}</td>
-      <td>{{ b.modelo?.nombreModelo }}</td>
-      <td>
-        <button (click)="irEditar(b.id)">Editar</button>
-        <button (click)="eliminar(b.id)">Eliminar</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+  <section class="card" *ngIf="!loading && !error">
+    <table class="tbl" *ngIf="barcos?.length; else empty">
+      <thead>
+        <tr>
+          <th style="width:80px;">ID</th>
+          <th style="width:110px;">Posición X</th>
+          <th style="width:110px;">Posición Y</th>
+          <th style="width:110px;">Velocidad X</th>
+          <th style="width:110px;">Velocidad Y</th>
+          <th>Jugador</th>
+          <th>Modelo</th>
+          <th style="width:240px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let b of barcos">
+          <td>{{ b.id }}</td>
+          <td>{{ b.posX }}</td>
+          <td>{{ b.posY }}</td>
+          <td>{{ b.velocidadX }}</td>
+          <td>{{ b.velocidadY }}</td>
+          <td>{{ b.jugador?.nombre }}</td>
+          <td>{{ b.modelo?.nombreModelo }}</td>
+          <td class="row-actions">
+            <button class="btn subtle" (click)="irEditar(b.id)">✎ Editar</button>
+            <button class="btn outline danger" (click)="eliminar(b.id)">🗑️ Eliminar</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-<p *ngIf="!loading && !error && !barcos?.length">No hay barcos.</p>
+    <ng-template #empty>
+      <p class="empty">No hay barcos registrados.</p>
+    </ng-template>
+  </section>
+</main>

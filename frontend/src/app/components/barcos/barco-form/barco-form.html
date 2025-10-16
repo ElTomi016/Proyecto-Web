@@ -1,44 +1,82 @@
-<h2>{{ titulo }}</h2>
+<app-topbar></app-topbar>
 
-<div *ngIf="loading">Cargando...</div>
-<div *ngIf="!loading && error" style="color:red;">{{ error }}</div>
-
-<form *ngIf="!loading" (ngSubmit)="guardar()" style="display:grid;gap:12px;max-width:420px;">
-  <div>
-    <label>Posición X</label><br />
-    <input type="number" [(ngModel)]="model.posX" name="posX" required />
-  </div>
-  <div>
-    <label>Posición Y</label><br />
-    <input type="number" [(ngModel)]="model.posY" name="posY" required />
-  </div>
-  <div>
-    <label>Velocidad X</label><br />
-    <input type="number" [(ngModel)]="model.velocidadX" name="velocidadX" required />
-  </div>
-  <div>
-    <label>Velocidad Y</label><br />
-    <input type="number" [(ngModel)]="model.velocidadY" name="velocidadY" required />
+<main class="page-wrap">
+  <div class="title-row">
+    <h1>{{ id ? 'Editar barco' : 'Nuevo barco' }}</h1>
   </div>
 
-  <div>
-    <label>Jugador</label><br />
-    <select [(ngModel)]="model.jugadorId" name="jugadorId" required>
-      <option [ngValue]="undefined">-- Selecciona --</option>
-      <option *ngFor="let j of jugadores" [ngValue]="j.id">{{ j.nombre }} ({{ j.email }})</option>
-    </select>
-  </div>
+  <div *ngIf="loading" class="state">Cargando…</div>
+  <div *ngIf="!loading && error" class="state error">{{ error }}</div>
 
-  <div>
-    <label>Modelo</label><br />
-    <select [(ngModel)]="model.modeloId" name="modeloId" required>
-      <option [ngValue]="undefined">-- Selecciona --</option>
-      <option *ngFor="let m of modelos" [ngValue]="m.id">{{ m.nombreModelo }} - {{ m.color }}</option>
-    </select>
-  </div>
+  <section class="card" *ngIf="!loading">
+    <form (ngSubmit)="guardar()" #f="ngForm">
+      <div class="grid">
+        <div class="form-row">
+          <label for="posX">Posición X</label>
+          <input
+            id="posX"
+            name="posX"
+            type="number"
+            [(ngModel)]="model.posX"
+            required
+          />
+        </div>
+        <div class="form-row">
+          <label for="posY">Posición Y</label>
+          <input
+            id="posY"
+            name="posY"
+            type="number"
+            [(ngModel)]="model.posY"
+            required
+          />
+        </div>
+        <div class="form-row">
+          <label for="velocidadX">Velocidad X</label>
+          <input
+            id="velocidadX"
+            name="velocidadX"
+            type="number"
+            [(ngModel)]="model.velocidadX"
+            required
+          />
+        </div>
+        <div class="form-row">
+          <label for="velocidadY">Velocidad Y</label>
+          <input
+            id="velocidadY"
+            name="velocidadY"
+            type="number"
+            [(ngModel)]="model.velocidadY"
+            required
+          />
+        </div>
+      </div>
 
-  <div style="display:flex;gap:8px;">
-    <button type="submit">{{ id ? 'Actualizar' : 'Crear' }}</button>
-    <button type="button" (click)="cancelar()">Cancelar</button>
-  </div>
-</form>
+      <div class="grid">
+        <div class="form-row">
+          <label for="jugadorId">Jugador</label>
+          <select id="jugadorId" name="jugadorId" [(ngModel)]="model.jugadorId" required>
+            <option [ngValue]="undefined">-- Selecciona --</option>
+            <option *ngFor="let j of jugadores" [ngValue]="j.id">{{ j.nombre }} ({{ j.email }})</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="modeloId">Modelo</label>
+          <select id="modeloId" name="modeloId" [(ngModel)]="model.modeloId" required>
+            <option [ngValue]="undefined">-- Selecciona --</option>
+            <option *ngFor="let m of modelos" [ngValue]="m.id">{{ m.nombreModelo }} - {{ m.color }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="f.invalid || loading">
+          {{ id ? 'Guardar cambios' : 'Crear barco' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</main>
