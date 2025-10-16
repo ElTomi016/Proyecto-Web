@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+
+import { AdminComponent } from './components/admin/admin';
 import { JugadoresComponent } from './components/jugadores/jugadores';
 import { JugadorFormComponent } from './components/jugadores/jugador-form/jugador-form';
 
@@ -9,7 +11,9 @@ import { BarcosComponent } from './components/barcos/barcos';
 import { BarcoFormComponent } from './components/barcos/barco-form/barco-form';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'jugadores' },
+  { path: '', pathMatch: 'full', redirectTo: 'admin' },
+
+  { path: 'admin', component: AdminComponent },
 
   { path: 'jugadores', component: JugadoresComponent },
   { path: 'jugadores/nuevo', component: JugadorFormComponent },
@@ -23,5 +27,5 @@ export const routes: Routes = [
   { path: 'barcos/nuevo', component: BarcoFormComponent },
   { path: 'barcos/:id/editar', component: BarcoFormComponent },
 
-  { path: '**', redirectTo: 'jugadores' }
+  { path: '**', redirectTo: 'admin' }
 ];

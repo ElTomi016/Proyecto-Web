@@ -1,21 +1,43 @@
-<h2>{{ titulo }}</h2>
+<app-topbar></app-topbar>
 
-<div *ngIf="loading">Cargando...</div>
-<div *ngIf="!loading && error" style="color:red;">{{ error }}</div>
-
-<form *ngIf="!loading" (ngSubmit)="guardar()" style="display:grid;gap:12px;max-width:420px;">
-  <div>
-    <label>Nombre del modelo</label><br />
-    <input [(ngModel)]="model.nombreModelo" name="nombreModelo" required />
+<main class="page-wrap">
+  <div class="title-row">
+    <h1>{{ id ? 'Editar modelo de barco' : 'Crear modelo de barco' }}</h1>
   </div>
 
-  <div>
-    <label>Color</label><br />
-    <input [(ngModel)]="model.color" name="color" required />
-  </div>
+  <div *ngIf="loading" class="state">Cargando…</div>
+  <div *ngIf="!loading && error" class="state error">{{ error }}</div>
 
-  <div style="display:flex;gap:8px;">
-    <button type="submit">{{ id ? 'Actualizar' : 'Crear' }}</button>
-    <button type="button" (click)="cancelar()">Cancelar</button>
-  </div>
-</form>
+  <section class="card" *ngIf="!loading">
+    <form (ngSubmit)="guardar()" #f="ngForm">
+      <div class="form-row">
+        <label for="nombreModelo">Nombre del modelo</label>
+        <input
+          id="nombreModelo"
+          name="nombreModelo"
+          type="text"
+          [(ngModel)]="model.nombreModelo"
+          required
+        />
+      </div>
+
+      <div class="form-row">
+        <label for="color">Color</label>
+        <input
+          id="color"
+          name="color"
+          type="text"
+          [(ngModel)]="model.color"
+          required
+        />
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn" (click)="volver()">Cancelar</button>
+        <button type="submit" class="btn primary" [disabled]="f.invalid || loading">
+          {{ id ? 'Guardar cambios' : 'Crear modelo' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</main>

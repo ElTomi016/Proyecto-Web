@@ -20,13 +20,17 @@ export class JugadoresComponent implements OnInit {
   ngOnInit(): void { this.cargar(); }
 
   cargar(): void {
-    this.loading = true; this.error = '';
-    this.api.getAll().subscribe({
-      next: data => this.jugadores = data,
-      error: () => this.error = 'No se pudo cargar la lista.',
-      complete: () => this.loading = false
-    });
-  }
+  this.loading = true; this.error = '';
+  this.api.getAll().subscribe({
+    next: d => this.jugadores = d,
+    error: (err) => {
+      console.error('Jugadores getAll error', err);
+      this.error = 'No se pudo cargar la lista.';
+      this.loading = false;              // <- aquí también
+    },
+    complete: () => this.loading = false
+  });
+}
 
   irNuevo(): void { this.router.navigateByUrl('/jugadores/nuevo'); }
   irEditar(id?: number): void { if (id) this.router.navigate(['/jugadores', id, 'editar']); }
