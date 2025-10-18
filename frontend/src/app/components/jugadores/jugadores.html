@@ -1,25 +1,33 @@
-<h2>Lista de Jugadores</h2>
+<section class="card container">
+  <header class="card-head">
+    <h1>Lista de Jugadores</h1>
+    <button class="btn-primary" (click)="goNew()">+ Nuevo Jugador</button>
+  </header>
 
-<button class="btn-primary" type="button" (click)="onNew()">+ Nuevo Jugador</button>
+  <div *ngIf="loading">Cargando…</div>
+  <div class="error" *ngIf="!loading && error">{{ error }}</div>
 
-<table class="table">
-  <thead>
-    <tr>
-      <th>ID</th><th>Nombre</th><th>Email</th><th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let j of jugadores">
-      <td>{{ j.id }}</td>
-      <td>{{ j.nombre }}</td>
-      <td>{{ j.email }}</td>
-      <td>
-        <button class="btn" type="button" (click)="onEdit(j.id!)">Editar</button>
-        <button class="btn-danger" type="button" (click)="onDelete(j.id!)">Eliminar</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<p *ngIf="loading">Cargando…</p>
-<p *ngIf="error" style="color:#b11">{{ error }}</p>
+  <table class="table" *ngIf="!loading && !error">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Teléfono</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let j of jugadores">
+        <td>{{ j.id }}</td>
+        <td>{{ j.nombre }}</td>
+        <td>{{ j.email }}</td>
+        <td>{{ j.telefono || '—' }}</td>
+        <td>
+          <button class="btn" (click)="goEdit(j.id!)">Editar</button>
+          <button class="btn danger" (click)="onDelete(j.id!)">Eliminar</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>

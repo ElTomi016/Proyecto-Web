@@ -1,4 +1,4 @@
-<section class="card">
+<section class="card container">
   <header class="card-head">
     <h1>Modelos de Barco</h1>
     <button class="btn-primary" (click)="goNew()">+ Nuevo Modelo</button>
@@ -13,7 +13,7 @@
         <th>ID</th>
         <th>Nombre del Modelo</th>
         <th>Color</th>
-        <th style="width:210px;text-align:right">Acciones</th>
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
@@ -21,9 +21,9 @@
         <td>{{ m.id }}</td>
         <td>{{ m.nombreModelo }}</td>
         <td>{{ m.color }}</td>
-        <td class="actions">
-          <button class="btn" (click)="goEdit(m.id)">Editar</button>
-          <button class="btn-danger" (click)="remove(m.id)">Eliminar</button>
+        <td>
+          <button class="btn" (click)="goEdit(m.id!)">Editar</button>
+          <button class="btn danger" (click)="onDelete(m.id!)">Eliminar</button>
         </td>
       </tr>
     </tbody>

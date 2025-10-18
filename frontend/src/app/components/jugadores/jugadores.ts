@@ -1,59 +1,39 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { JugadorService, Jugador } from '../../services/jugador.service';
 
 @Component({
-  selector: 'app-jugadores',
   standalone: true,
-  imports: [CommonModule, RouterLink],
   templateUrl: './jugadores.html',
+  styleUrls: ['./jugadores.css'],
+  imports: [CommonModule, RouterLink, NgIf, NgFor],
 })
 export class JugadoresComponent implements OnInit {
+  private srv = inject(JugadorService);
+  private router = inject(Router);
+
   jugadores: Jugador[] = [];
-  loading = false;
-  error = '';
+  loading = true; error = '';
 
-  constructor(
-    private srv: JugadorService,
-    private router: Router
-  ) {}
+  ngOnInit(): void { this.load(); }
 
-  ngOnInit() {
-    this.load();
-  }
-
-  load() {
+  private load(): void {
     this.loading = true;
     this.srv.getAll().subscribe({
-      next: (data) => {
-        this.jugadores = data ?? [];
-        this.loading = false;
-      },
-      error: (e) => {
-        console.error('[Jugadores] getAll error', e);
-        this.error = 'No se pudo cargar la lista.';
-        this.loading = false;
-      }
+      next: d => { this.jugadores = d ?? []; this.loading = false; },
+      error: () => { this.error = 'No se pudo cargar la lista.'; this.loading = false; }
     });
   }
 
-  onNew() {
-    this.router.navigate(['/admin/jugadores/nuevo']);
-  }
+  goNew(): void { this.router.navigate(['/admin/jugadores', 'nuevo']); }
+  goEdit(id: number): void { this.router.navigate(['/admin/jugadores', id, 'editar']); }
 
-  onEdit(id: number) {
-    this.router.navigate(['/admin/jugadores', id, 'editar']);
-  }
-
-  onDelete(id: number) {
-    if (!confirm('¿Seguro de eliminar?')) return;
+  onDelete(id: number): void {
+    if (!confirm('¿Eliminar jugador?')) return;
     this.srv.delete(id).subscribe({
       next: () => this.load(),
-      error: (e) => {
-        console.error('[Jugadores] delete error', e);
-        this.error = 'No se pudo eliminar.';
-      }
+      error: () => this.error = 'No se pudo eliminar.'
     });
   }
 }

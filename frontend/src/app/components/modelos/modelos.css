@@ -1,2 +1,1 @@
-/* Reutilizamos el mismo estilo de Jugadores para coherencia visual */
-@import url('../jugadores/jugadores.css');
+@import '../../../styles.css';

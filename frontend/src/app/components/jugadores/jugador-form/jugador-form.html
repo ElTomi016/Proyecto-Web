@@ -1,20 +1,21 @@
-<h2>{{ id ? 'Editar Jugador' : 'Nuevo Jugador' }}</h2>
+<div class="container">
+  <h2>{{ titulo }}</h2>
+  <div class="error" *ngIf="error">{{ error }}</div>
 
-<form [formGroup]="form" (ngSubmit)="submit()">
-  <div>
-    <label>Nombre</label>
-    <input formControlName="nombre" />
-  </div>
+  <form class="form" [formGroup]="form" (ngSubmit)="guardar()">
+    <label>Nombre
+      <input formControlName="nombre" />
+    </label>
+    <label>Email
+      <input formControlName="email" />
+    </label>
+    <label>Teléfono
+      <input formControlName="telefono" />
+    </label>
 
-  <div>
-    <label>Email</label>
-    <input formControlName="email" />
-  </div>
-
-  <div>
-    <label>Teléfono</label>
-    <input formControlName="telefono" />
-  </div>
-
-  <button class="btn-primary" type="submit">Guardar</button>
-</form>
+    <div class="actions">
+      <button class="btn-primary" type="submit" [disabled]="saving">Guardar</button>
+      <button class="btn" type="button" (click)="cancelar()">Cancelar</button>
+    </div>
+  </form>
+</div>

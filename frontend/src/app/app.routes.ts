@@ -1,39 +1,25 @@
 import { Routes } from '@angular/router';
 
-// Panel de administración
-import { AdminComponent } from './components/admin/admin';
-
-// CRUD Jugadores
-import { JugadoresComponent } from './components/jugadores/jugadores';
-import { JugadorFormComponent } from './components/jugadores/jugador-form/jugador-form';
-
-// CRUD Modelos
-import { ModelosComponent } from './components/modelos/modelos';
-import { ModelosFormComponent } from './components/modelos/modelo-form/modelo-form';
-
-// CRUD Barcos
-import { BarcosComponent } from './components/barcos/barcos';
-import { BarcoFormComponent } from './components/barcos/barco-form/barco-form';
-
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'admin' },
+  { path: '', redirectTo: '/admin', pathMatch: 'full' },
 
-  { path: 'admin', component: AdminComponent },
-
-  // Jugadores
-  { path: 'admin/jugadores', component: JugadoresComponent },
-  { path: 'admin/jugadores/nuevo', component: JugadorFormComponent },
-  { path: 'admin/jugadores/:id/editar', component: JugadorFormComponent },
-
-  // Modelos de Barco
-  { path: 'admin/modelos', component: ModelosComponent },
-  { path: 'admin/modelos/nuevo', component: ModelosFormComponent },
-  { path: 'admin/modelos/:id/editar', component: ModelosFormComponent },
+  // Dashboard simple (panel)
+  { path: 'admin', loadComponent: () => import('./components/admin/admin').then(m => m.AdminComponent) },
 
   // Barcos
-  { path: 'admin/barcos', component: BarcosComponent },
-  { path: 'admin/barcos/nuevo', component: BarcoFormComponent },
-  { path: 'admin/barcos/:id/editar', component: BarcoFormComponent },
+  { path: 'admin/barcos', loadComponent: () => import('./components/barcos/barcos').then(m => m.BarcosComponent) },
+  { path: 'admin/barcos/nuevo', loadComponent: () => import('./components/barcos/barco-form/barco-form').then(m => m.BarcoFormComponent) },
+  { path: 'admin/barcos/:id/editar', loadComponent: () => import('./components/barcos/barco-form/barco-form').then(m => m.BarcoFormComponent) },
 
-  { path: '**', redirectTo: 'admin' }
+  // Jugadores
+  { path: 'admin/jugadores', loadComponent: () => import('./components/jugadores/jugadores').then(m => m.JugadoresComponent) },
+  { path: 'admin/jugadores/nuevo', loadComponent: () => import('./components/jugadores/jugador-form/jugador-form').then(m => m.JugadorFormComponent) },
+  { path: 'admin/jugadores/:id/editar', loadComponent: () => import('./components/jugadores/jugador-form/jugador-form').then(m => m.JugadorFormComponent) },
+
+  // Modelos
+  { path: 'admin/modelos', loadComponent: () => import('./components/modelos/modelos').then(m => m.ModelosComponent) },
+  { path: 'admin/modelos/nuevo', loadComponent: () => import('./components/modelos/modelo-form/modelo-form').then(m => m.ModelosFormComponent) },
+  { path: 'admin/modelos/:id/editar', loadComponent: () => import('./components/modelos/modelo-form/modelo-form').then(m => m.ModelosFormComponent) },
+
+  { path: '**', redirectTo: '/admin' }
 ];

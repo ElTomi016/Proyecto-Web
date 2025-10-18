@@ -23,18 +23,12 @@
     <tbody>
       <tr *ngFor="let b of barcos">
         <td>{{ b.id }}</td>
-
-        <!-- Jugador -->
-        <td>{{ b.jugador?.nombre || b.jugador?.id || '—' }}</td>
-
-        <!-- Modelo (propiedad real en tu JSON: nombreModelo) -->
-        <td>{{ b.modelo?.nombreModelo || b.modelo?.id || '—' }}</td>
-
+        <td>{{ b.jugador?.nombre || '—' }}</td>
+        <td>{{ b.modelo?.nombreModelo || '—' }}</td>
         <td>{{ b.posX }}</td>
         <td>{{ b.posY }}</td>
         <td>{{ b.velocidadX }}</td>
         <td>{{ b.velocidadY }}</td>
-
         <td>
           <button class="btn" (click)="goEdit(b.id)">Editar</button>
           <button class="btn danger" (click)="onDelete(b.id)">Eliminar</button>
@@ -42,9 +36,4 @@
       </tr>
     </tbody>
   </table>
-
-  <!-- DEBUG (temporal): comenta o elimina cuando verifiques -->
-  <pre style="white-space: pre-wrap; background:#fafafa; padding:8px; border:1px solid #eee;">
-{{ barcos | json }}
-  </pre>
 </section>

@@ -1,58 +1,54 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule, NgIf } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { JugadorService, Jugador } from '../../../services/jugador.service';
 
 @Component({
-  selector: 'app-jugador-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './jugador-form.html',
+  styleUrls: ['./jugador-form.css'],
+  imports: [CommonModule, ReactiveFormsModule, NgIf, RouterLink],
 })
 export class JugadorFormComponent implements OnInit {
-
-  // Opción A: usar inject() para evitar TS2729
   private fb = inject(FormBuilder);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
   private srv = inject(JugadorService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-  id?: number;
+  titulo = 'Nuevo Jugador';
+  error = '';
+  saving = false;
+  id: number | null = null;
 
   form = this.fb.nonNullable.group({
-    nombre: ['', Validators.required],
+    nombre: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
-    telefono: [''],
+    telefono: ['']
   });
 
-  ngOnInit() {
-    const rawId = this.route.snapshot.paramMap.get('id');
-    this.id = rawId ? +rawId : undefined;
-
-    if (this.id) {
+  ngOnInit(): void {
+    const raw = this.route.snapshot.paramMap.get('id');
+    if (raw) {
+      this.id = Number(raw); this.titulo = 'Editar Jugador';
       this.srv.get(this.id).subscribe({
-        next: (j) => this.form.patchValue({
-          nombre: j.nombre,
-          email: j.email,
-          telefono: j.telefono ?? ''
-        }),
-        error: (e) => console.error('[JugadorForm] get error', e)
+        next: (j) => this.form.patchValue(j),
+        error: () => this.error = 'No se pudo cargar el jugador.'
       });
     }
   }
 
-  submit() {
-    if (this.form.invalid) return;
-
+  guardar(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.saving = true; this.error = '';
     const payload: Jugador = this.form.getRawValue();
-    const obs$ = this.id
-      ? this.srv.update(this.id, payload)
-      : this.srv.create(payload);
 
+    const obs$ = this.id ? this.srv.update(this.id, payload) : this.srv.create(payload);
     obs$.subscribe({
       next: () => this.router.navigate(['/admin/jugadores']),
-      error: (e) => console.error('[JugadorForm] save error', e)
+      error: () => { this.error = 'No se pudo guardar.'; this.saving = false; }
     });
   }
+
+  cancelar(): void { this.router.navigate(['/admin/jugadores']); }
 }

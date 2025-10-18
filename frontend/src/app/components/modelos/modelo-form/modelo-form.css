@@ -1,9 +1,1 @@
-.panel { background:#fff; padding:16px; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.06); }
-.form { display:grid; gap:12px; }
-label { display:grid; gap:6px; }
-input[type="text"] { padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; }
-input[type="color"] { width:60px; height:36px; padding:0; border:none; background:transparent; }
-.form__actions { display:flex; gap:8px; margin-top:8px; }
-.btn { padding:6px 12px; border-radius:8px; border:1px solid #d1d5db; background:#f9fafb; cursor:pointer; }
-.btn--primary { background:#2563eb; border-color:#2563eb; color:#fff; }
-.state--error { color:#b91c1c; margin-top:8px; }
+@import '../../../../styles.css';

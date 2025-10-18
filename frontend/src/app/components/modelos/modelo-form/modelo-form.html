@@ -1,24 +1,18 @@
-<section class="panel">
-  <header class="panel__head">
-    <h2>{{ titulo }}</h2>
-  </header>
+<div class="container">
+  <h2>{{ titulo }}</h2>
+  <div class="error" *ngIf="error">{{ error }}</div>
 
-  <form [formGroup]="form" (ngSubmit)="guardar()" class="form">
-    <label>
-      <span>Nombre del modelo</span>
-      <input type="text" formControlName="nombreModelo" />
+  <form class="form" [formGroup]="form" (ngSubmit)="guardar()">
+    <label>Nombre del modelo
+      <input formControlName="nombreModelo" />
+    </label>
+    <label>Color
+      <input formControlName="color" />
     </label>
 
-    <label>
-      <span>Color</span>
-      <input type="color" formControlName="color" />
-    </label>
-
-    <div class="form__actions">
-      <button type="submit" class="btn btn--primary" [disabled]="loading">Guardar</button>
-      <button type="button" class="btn" (click)="cancelar()">Cancelar</button>
+    <div class="actions">
+      <button class="btn-primary" type="submit" [disabled]="saving">Guardar</button>
+      <button class="btn" type="button" (click)="cancelar()">Cancelar</button>
     </div>
-
-    <div *ngIf="error" class="state state--error">{{ error }}</div>
   </form>
-</section>
+</div>
