@@ -14,6 +14,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         <a routerLink="/admin/modelos" routerLinkActive="active">Modelos</a>
         <a routerLink="/admin/barcos" routerLinkActive="active">Barcos</a>
         <a routerLink="/admin/jugadores" routerLinkActive="active">Jugadores</a>
+        <a routerLink="/juego" routerLinkActive="active" class="game-link">Juego</a>
       </nav>
     </header>
   `,
@@ -26,6 +27,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     .brand { font-weight: 700; color: #111827; }
     .nav a { margin: 0 12px; color: #374151; text-decoration: none; }
     .nav a.active { color: #1d4ed8; border-bottom: 2px solid #1d4ed8; padding-bottom: 4px; }
+    .nav .game-link { color: #059669; font-weight: 600; }
   `]
 })
-export class TopbarComponent {}
+export class TopbarComponent { }

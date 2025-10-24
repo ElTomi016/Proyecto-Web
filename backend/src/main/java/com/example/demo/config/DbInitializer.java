@@ -32,6 +32,11 @@ public class DbInitializer {
 
     @PostConstruct
     public void init() {
+        // Sólo inicializar si no hay datos (idempotente)
+        if (jugadorRepo.count() > 0 || modeloRepo.count() > 0 || barcoRepo.count() > 0) {
+            return;
+        }
+
         // Jugadores
         List<Jugador> jugadores = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
@@ -47,7 +52,6 @@ public class DbInitializer {
             modelos.add(modeloRepo.save(m));
         }
 
-        
         Mapa mapa = new Mapa(10, 10);
         mapa = mapaRepo.save(mapa);
         for (int x = 0; x < 10; x++) {
