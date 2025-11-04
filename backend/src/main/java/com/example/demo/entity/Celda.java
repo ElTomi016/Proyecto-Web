@@ -1,5 +1,6 @@
 package com.example.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -17,6 +18,7 @@ public class Celda {
     @Enumerated(EnumType.STRING)
     private Tipo tipo;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "mapa_id")
     private Mapa mapa;

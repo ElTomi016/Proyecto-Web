@@ -7,10 +7,11 @@ export class GameService {
     return res.json();
   }
 
-  async createPartida(nombre?: string, barcos?: number[]): Promise<any> {
+  async createPartida(nombre?: string, barcos?: number[], mapaId?: number): Promise<any> {
     const payload: any = {};
     if (nombre) payload.nombre = nombre;
     if (Array.isArray(barcos) && barcos.length) payload.barcos = barcos;
+    if (mapaId != null && Number.isFinite(mapaId)) payload.mapaId = mapaId;
     const res = await fetch(this.base, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

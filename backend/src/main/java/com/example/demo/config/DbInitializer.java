@@ -4,6 +4,7 @@ import com.example.demo.entity.*;
 import com.example.demo.repository.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,58 +32,169 @@ public class DbInitializer {
     }
 
     @PostConstruct
+    @Transactional
     public void init() {
-        // Sólo inicializar si no hay datos (idempotente)
-        if (jugadorRepo.count() > 0 || modeloRepo.count() > 0 || barcoRepo.count() > 0) {
+        seedJugadores();
+        seedModelos();
+        seedMapas();
+        seedBarcos();
+    }
+
+    private void seedJugadores() {
+        if (jugadorRepo.count() > 0) {
             return;
         }
-
-        // Jugadores
         List<Jugador> jugadores = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
             Jugador j = new Jugador("Jugador " + i, "jugador" + i + "@correo.com");
-            jugadores.add(jugadorRepo.save(j));
+            jugadores.add(j);
         }
+        jugadorRepo.saveAll(jugadores);
+    }
 
-        // Modelos
-        String[] colores = {"Rojo", "Azul", "Verde", "Amarillo", "Negro", "Blanco", "Gris", "Naranja", "Morado", "Café"};
+    private void seedModelos() {
+        if (modeloRepo.count() > 0) {
+            return;
+        }
+        String[] colores = {"Rojo", "Azul", "Verde", "Amarillo", "Negro", "Blanco", "Gris", "Naranja", "Morado", "Cafe"};
         List<ModeloBarco> modelos = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
-            ModeloBarco m = new ModeloBarco("Modelo " + i, colores[(i-1) % colores.length]);
-            modelos.add(modeloRepo.save(m));
+            ModeloBarco m = new ModeloBarco("Modelo " + i, colores[(i - 1) % colores.length]);
+            modelos.add(m);
+        }
+        modeloRepo.saveAll(modelos);
+    }
+
+    private void seedMapas() {
+        mapaRepo.findAll().stream()
+                .filter(m -> m.getNombre() == null || m.getNombre().isBlank())
+                .findFirst()
+                .ifPresent(existing -> {
+                    existing.setNombre("Estrecho Clásico");
+                    mapaRepo.save(existing);
+                });
+
+        // Mapa 1: Estrecho clásico, pasillos con giros
+        String[] estrechoClasico = {
+                "############",
+                "#S....#....#",
+                "#S.##.#.##.#",
+                "#....#....M#",
+                "###.###.####",
+                "#....#.....#",
+                "#.####.###.#",
+                "#....#.#...#",
+                "##.###.#.###",
+                "#....#.#...#",
+                "#....#.....#",
+                "############"
+        };
+
+        // Mapa 2: Archipiélago con múltiples rutas
+        String[] archipielagoCentral = {
+                "##############",
+                "#S....#..#...#",
+                "###.###..###.#",
+                "#...#....#...#",
+                "#.#.######.#.#",
+                "#.#....##.#M.#",
+                "#.####.#.###.#",
+                "#.....#...#..#",
+                "#.#S######...#",
+                "##############"
+        };
+
+        // Mapa 3: Canal abierto con obstáculos dispersos
+        String[] canalTormentoso = {
+                "################",
+                "#S.....#......M#",
+                "###.###.####.###",
+                "#...#.......#..#",
+                "#.#.#.#####.#..#",
+                "#.#.#.....#.#..#",
+                "#.#.#####.#.#..#",
+                "#.#.....#.#.#..#",
+                "#.#####.#.#.#..#",
+                "#.....#.#.#...##",
+                "#S###.#.#.###S##",
+                "################"
+        };
+
+        upsertMap("Estrecho Clásico", estrechoClasico);
+        upsertMap("Archipiélago Central", archipielagoCentral);
+        upsertMap("Canal Tormentoso", canalTormentoso);
+    }
+
+    private void seedBarcos() {
+        if (barcoRepo.count() > 0) {
+            return;
+        }
+        List<Jugador> jugadores = jugadorRepo.findAll();
+        if (jugadores.isEmpty()) {
+            return;
+        }
+        List<ModeloBarco> modelos = modeloRepo.findAll();
+        if (modelos.isEmpty()) {
+            return;
         }
 
-        Mapa mapa = new Mapa(10, 10);
-        mapa = mapaRepo.save(mapa);
-        for (int x = 0; x < 10; x++) {
-            for (int y = 0; y < 10; y++) {
-                Celda.Tipo tipo = Celda.Tipo.AGUA;
-                // bordes como paredes
-                if (x == 0 || y == 0 || x == 9 || y == 9) tipo = Celda.Tipo.PARED;
-                celdaRepo.save(new Celda(x, y, tipo, mapa));
-            }
-        }
-        // partida y meta
-        Celda partida = new Celda(1, 1, Celda.Tipo.PARTIDA, mapa);
-        Celda meta = new Celda(8, 8, Celda.Tipo.META, mapa);
-        celdaRepo.save(partida);
-        celdaRepo.save(meta);
-
-        // 50 barcos: 10 por jugador, modelos rotando
         Random rnd = new Random();
         int idx = 0;
-        for (Jugador j : jugadores) {
+        for (Jugador jugador : jugadores) {
             for (int b = 0; b < 10; b++) {
                 Barco barco = new Barco();
-                barco.setPosX(1 + rnd.nextInt(2)); // cerca de la partida
-                barco.setPosY(1 + rnd.nextInt(2));
+                barco.setPosX(2 + rnd.nextInt(3));
+                barco.setPosY(2 + rnd.nextInt(3));
                 barco.setVelocidadX(0);
                 barco.setVelocidadY(0);
-                barco.setJugador(j);
+                barco.setJugador(jugador);
                 barco.setModelo(modelos.get(idx % modelos.size()));
                 barcoRepo.save(barco);
                 idx++;
             }
         }
+    }
+
+    private void upsertMap(String nombre, String[] layout) {
+        if (layout == null || layout.length == 0) {
+            return;
+        }
+        int filas = layout.length;
+        int columnas = layout[0].length();
+        for (String row : layout) {
+            if (row.length() != columnas) {
+                throw new IllegalArgumentException("Todas las filas del mapa deben tener el mismo tamaño: " + nombre);
+            }
+        }
+
+        Mapa mapa = mapaRepo.findByNombre(nombre)
+                .orElseGet(() -> new Mapa(nombre, filas, columnas));
+        mapa.setFilas(filas);
+        mapa.setColumnas(columnas);
+        mapa.setNombre(nombre);
+        mapa = mapaRepo.save(mapa);
+
+        if (mapa.getId() != null) {
+            List<Celda> existing = celdaRepo.findByMapaId(mapa.getId());
+            if (!existing.isEmpty()) {
+                celdaRepo.deleteAll(existing);
+            }
+        }
+
+        List<Celda> celdas = new ArrayList<>();
+        for (int y = 0; y < filas; y++) {
+            String row = layout[y];
+            for (int x = 0; x < columnas; x++) {
+                char symbol = Character.toUpperCase(row.charAt(x));
+                Celda.Tipo tipo = switch (symbol) {
+                    case '#', 'X' -> Celda.Tipo.PARED;
+                    case 'S' -> Celda.Tipo.PARTIDA;
+                    case 'M' -> Celda.Tipo.META;
+                    default -> Celda.Tipo.AGUA;
+                };
+                celdas.add(new Celda(x, y, tipo, mapa));
+            }
+        }
+        celdaRepo.saveAll(celdas);
     }
 }

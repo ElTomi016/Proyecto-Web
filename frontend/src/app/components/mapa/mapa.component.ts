@@ -81,6 +81,40 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
           <label class="field-label">Nombre de la partida (opcional)</label>
           <input type="text" class="field-input" placeholder="Regata del Pacífico" [(ngModel)]="creatingName" />
 
+          <div class="maps-container">
+            <div class="ships-header">
+              <h4>Selecciona el mapa</h4>
+              <span class="chip muted" *ngIf="maps.length">{{ maps.length }} disponibles</span>
+            </div>
+
+            <div *ngIf="loadingMaps" class="empty-state">Cargando mapas…</div>
+            <div *ngIf="!loadingMaps && !maps.length" class="empty-state">
+              No hay mapas disponibles. Verifica la configuración del servidor.
+            </div>
+
+            <div class="map-grid" *ngIf="!loadingMaps && maps.length">
+              <label
+                *ngFor="let mapa of maps"
+                class="map-card"
+                [class.selected]="mapa.id === selectedMapId">
+                <input
+                  type="radio"
+                  name="mapa"
+                  [value]="mapa.id"
+                  [checked]="mapa.id === selectedMapId"
+                  (change)="selectMap(mapa.id)" />
+                <div>
+                  <strong>{{ mapa.nombre || ('Mapa #' + mapa.id) }}</strong>
+                  <small>
+                    {{ (mapa.columnas ?? mapa.mapColumns ?? mapa.cols ?? '-') }}
+                    ×
+                    {{ (mapa.filas ?? mapa.mapRows ?? mapa.rows ?? '-') }}
+                  </small>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div class="ships-container">
             <div class="ships-header">
               <h4>Selecciona los barcos que participarán</h4>
@@ -107,7 +141,7 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
             </div>
           </div>
 
-          <button class="primary-btn" [disabled]="creatingMatch || !selectedBoatIds.length" (click)="createMatch()">
+          <button class="primary-btn" [disabled]="creatingMatch || !selectedBoatIds.length || !selectedMapId" (click)="createMatch()">
             {{ creatingMatch ? 'Creando…' : 'Crear e iniciar partida' }}
           </button>
         </div>
@@ -141,41 +175,64 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
           <aside class="control-panel">
             <div class="turn-pill">Turno Barco #{{ currentBoatId ?? '-' }}</div>
 
-            <div class="panel-card">
-              <h4 class="panel-title">Barco actual</h4>
-              <div class="player-name">{{ currentPlayerName || 'Sin jugador asignado' }}</div>
+            <div class="panel-card movement-card">
+              <h4 class="panel-title">Control de movimiento</h4>
 
+              <div class="velocity-display">
+                <div>
+                  <small>Velocidad actual</small>
+                  <strong>vx={{ baseVx }} vy={{ baseVy }}</strong>
+                </div>
+                <div>
+                  <small>Próximo turno</small>
+                  <strong>vx={{ targetVx }} vy={{ targetVy }}</strong>
+                </div>
+              </div>
+
+              <div class="move-pad">
+                <button class="move-btn" (click)="adjustDelta(0,-1)" [class.active]="pendingDy === -1" aria-label="Acelerar hacia arriba">▲</button>
+                <div class="move-middle">
+                  <button class="move-btn" (click)="adjustDelta(-1,0)" [class.active]="pendingDx === -1" aria-label="Acelerar hacia la izquierda">◀</button>
+                  <button class="move-btn reset" (click)="resetPending()" aria-label="Mantener velocidad">•</button>
+                  <button class="move-btn" (click)="adjustDelta(1,0)" [class.active]="pendingDx === 1" aria-label="Acelerar hacia la derecha">▶</button>
+                </div>
+                <button class="move-btn" (click)="adjustDelta(0,1)" [class.active]="pendingDy === 1" aria-label="Acelerar hacia abajo">▼</button>
+              </div>
+
+              <div class="landing-info">
+                Próxima celda: <strong>{{ previewPosX }}, {{ previewPosY }}</strong>
+              </div>
+
+              <button class="confirm-btn" (click)="confirmMove()" [disabled]="submittingMove || !currentBoatId || partidaFinished">
+                {{ submittingMove ? 'Enviando…' : 'Confirmar movimiento' }}
+              </button>
+            </div>
+
+            <div class="panel-card status-card">
+              <h4 class="panel-title">Estado</h4>
+              <div class="player-name">{{ currentPlayerName || 'Sin jugador asignado' }}</div>
               <div class="stat-line">
                 <span class="icon">📍</span>
-                <strong>vx={{ vx }} vy={{ vy }}</strong>
+                <strong>Posición {{ posX }}, {{ posY }}</strong>
               </div>
-
-              <div class="section">
-                <h5>Estado</h5>
-                <ol class="pos-list">
-                  <li *ngFor="let p of positionLog">{{ p }}</li>
-                </ol>
-              </div>
-
-              <div class="pad-grid">
-                <button class="pad-btn" (click)="dir(-1,0)">◀</button>
-                <button class="pad-btn" (click)="dir(0,1)">▲</button>
-                <button class="pad-btn" (click)="dir(1,0)">▶</button>
-
-                <button class="pad-btn" (click)="dir(0,-1)">▼</button>
-                <button class="pad-btn large" (click)="applyAdvance()">3</button>
-                <button class="pad-btn" (click)="toggleAuto()">{{ auto ? 'Auto' : 'Man' }}</button>
-              </div>
-
-              <button class="execute-btn" (click)="executeMove()">Aplicar movimiento</button>
-
               <div class="next-turn">Siguiente turno<br><strong>Barco #{{ nextBoatId ?? '-' }}</strong></div>
+              <div class="victory-note" *ngIf="partidaFinished && winnerInfo">
+                Partida finalizada.
+              </div>
             </div>
 
             <div class="small-muted">
-              Tip: usa el panel del lado izquierdo para seleccionar barcos en el mapa interactivo.
+              Ajusta la velocidad con las flechas (máx ±1 por eje) y confirma para avanzar.
             </div>
           </aside>
+        </div>
+        <div class="victory-overlay" *ngIf="showVictory && winnerInfo">
+          <div class="victory-card">
+            <div class="trophy" aria-hidden="true">🏆</div>
+            <h2>¡Victoria!</h2>
+            <p>El <strong>{{ winnerInfo.label }}</strong> ganó la regata.</p>
+            <button class="victory-btn" type="button" (click)="closeVictory()">Entendido</button>
+          </div>
         </div>
       </section>
     </div>
@@ -192,24 +249,38 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   barcos: Barco[] = [];
   loadingPartidas = false;
   loadingBarcos = false;
+  maps: any[] = [];
+  loadingMaps = false;
   creatingMatch = false;
   currentPartidaId: number | null = null;
   selectedLoadPartidaId: number | null = null;
   creatingName = '';
+  selectedMapId: number | null = null;
+  currentMapId: number | null = null;
 
   currentBoatId: number | null = null;
   nextBoatId: number | null = null;
   currentPlayerName = '';
-  vx = 0;
-  vy = 0;
-  positionLog: string[] = [];
-  auto = false;
+  baseVx = 0;
+  baseVy = 0;
+  pendingDx = 0;
+  pendingDy = 0;
+  posX = 0;
+  posY = 0;
+  previewPosX = 0;
+  previewPosY = 0;
+  submittingMove = false;
+  partidaFinished = false;
+  showVictory = false;
+  winnerInfo: { id: number; label: string } | null = null;
+  lastWinnerId: number | null = null;
   mapReady = false;
 
   readonly selectedBoatSet = new Set<number>();
 
   private es: EventSource | null = null;
   private renderer: MapRenderer | null = null;
+  private mapLayoutCache = new Map<number, MapLayout>();
   private mapLayout: MapLayout | null = null;
   private boatsState: any[] = [];
   private assignedBoatIds: number[] = [];
@@ -249,9 +320,12 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.es) { this.es.close(); this.es = null; }
+    this.renderer?.setMovePreview(null);
     this.renderer?.destroy();
     this.renderer = null;
     this.assignedBoatIds = [];
+    this.pendingDx = 0;
+    this.pendingDy = 0;
   }
 
   enterLoadMode() {
@@ -262,23 +336,40 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   enterCreateMode() {
     this.viewStep = 'create';
     this.loadBarcos();
+    this.loadMaps();
   }
 
   backToMenu() {
     if (this.es) { this.es.close(); this.es = null; }
     this.renderer?.setBoats([]);
+    this.renderer?.setMovePreview(null);
     this.viewStep = 'menu';
     this.currentPartidaId = null;
     this.currentBoatId = null;
     this.nextBoatId = null;
-    this.positionLog = [];
     this.mapReady = false;
     this.assignedBoatIds = [];
+    this.pendingDx = 0;
+    this.pendingDy = 0;
+    this.previewPosX = 0;
+    this.previewPosY = 0;
+    this.submittingMove = false;
+    this.partidaFinished = false;
+    this.showVictory = false;
+    this.winnerInfo = null;
+    this.lastWinnerId = null;
+    this.currentMapId = null;
+    this.mapLayout = null;
     this.updateUrlParams(null, []);
   }
 
   selectExistingPartida(id: number) {
     this.selectedLoadPartidaId = id;
+    const found = this.partidas.find((p:any) => Number(p.id) === id);
+    if (found && found.mapaId != null) {
+      const parsed = Number(found.mapaId);
+      this.currentMapId = Number.isFinite(parsed) ? parsed : this.currentMapId;
+    }
   }
 
   async startExistingGame() {
@@ -287,7 +378,12 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     this.mapReady = false;
     this.currentPartidaId = this.selectedLoadPartidaId;
     this.assignedBoatIds = [];
-    await this.ensureMapLoaded(this.selectedLoadPartidaId);
+    this.partidaFinished = false;
+    this.showVictory = false;
+    this.winnerInfo = null;
+    this.lastWinnerId = null;
+    this.submittingMove = false;
+    await this.ensureMapLoaded(this.selectedLoadPartidaId, undefined, this.currentMapId);
     this.updateUrlParams(this.selectedLoadPartidaId, []);
   }
 
@@ -298,14 +394,27 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     this.updateTurnPointers();
   }
 
+  selectMap(id: number) {
+    if (!Number.isFinite(id)) return;
+    this.selectedMapId = id;
+  }
+
   async createMatch() {
     if (!this.selectedBoatIds.length) {
       alert('Selecciona al menos un barco para la partida.');
       return;
     }
+    if (!this.selectedMapId) {
+      alert('Selecciona un mapa para la partida.');
+      return;
+    }
     this.creatingMatch = true;
     try {
-      const partida = await this.gs.createPartida(this.creatingName?.trim() || undefined, this.selectedBoatIds);
+      const partida = await this.gs.createPartida(
+        this.creatingName?.trim() || undefined,
+        this.selectedBoatIds,
+        this.selectedMapId,
+      );
       const orderFromResponse = Array.isArray((partida as any)?.order)
         ? (partida as any).order.map((v:any) => Number(v)).filter((v:number) => !Number.isNaN(v))
         : [];
@@ -315,9 +424,14 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
         orderFromResponse.forEach((id: number) => this.selectedBoatSet.add(id));
       }
       this.currentPartidaId = Number(partida.id);
+      const responseMapIdRaw = (partida as any)?.mapaId ?? (partida as any)?.mapa_id;
+      const responseMapId = Number(responseMapIdRaw ?? this.selectedMapId);
+      if (Number.isFinite(responseMapId)) {
+        this.currentMapId = responseMapId;
+      }
       this.viewStep = 'playing';
       this.mapReady = false;
-      await this.ensureMapLoaded(this.currentPartidaId, this.selectedBoatIds);
+      await this.ensureMapLoaded(this.currentPartidaId, this.selectedBoatIds, this.currentMapId);
       this.updateUrlParams(this.currentPartidaId, this.selectedBoatIds);
     } catch (e:any) {
       alert('No se pudo crear la partida: ' + (e.message || e));
@@ -342,6 +456,13 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       if (this.partidas.length && !this.selectedLoadPartidaId) {
         this.selectedLoadPartidaId = Number(this.partidas[0].id);
       }
+      if (this.selectedLoadPartidaId) {
+        const found = this.partidas.find((p:any) => Number(p.id) === this.selectedLoadPartidaId);
+        if (found && found.mapaId != null) {
+          const parsed = Number(found.mapaId);
+          this.currentMapId = Number.isFinite(parsed) ? parsed : this.currentMapId;
+        }
+      }
     } catch (e) {
       console.warn('No se pudo cargar la lista de partidas', e);
       this.partidas = [];
@@ -363,7 +484,40 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private async ensureMapLoaded(partidaId: number, selectedBoatIds?: number[]) {
+  private async loadMaps(force = false) {
+    if (!force && this.maps.length) return;
+    this.loadingMaps = true;
+    try {
+      const res = await fetch('/api/mapa');
+      if (!res.ok) {
+        throw new Error('Respuesta no exitosa al consultar mapas');
+      }
+      const payload = await res.json();
+      const list = Array.isArray(payload) ? payload : (payload ? [payload] : []);
+      this.maps = list.map((m:any) => ({
+        id: Number(m.id),
+        nombre: m.nombre,
+        columnas: m.columnas ?? m.cols ?? m.columnCount,
+        filas: m.filas ?? m.rows ?? m.rowCount,
+        celdas: m.celdas,
+      })).filter((m:any) => Number.isFinite(m.id));
+      if (!this.selectedMapId && this.maps.length) {
+        this.selectedMapId = this.maps[0].id;
+      } else if (this.selectedMapId) {
+        const exists = this.maps.some((m:any) => m.id === this.selectedMapId);
+        if (!exists && this.maps.length) {
+          this.selectedMapId = this.maps[0].id;
+        }
+      }
+    } catch (err) {
+      console.warn('No se pudo cargar la lista de mapas', err);
+      this.maps = [];
+    } finally {
+      this.loadingMaps = false;
+    }
+  }
+
+  private async ensureMapLoaded(partidaId: number, selectedBoatIds?: number[], mapId?: number | null) {
     try {
       this.assignedBoatIds = [];
       if (Array.isArray(selectedBoatIds) && selectedBoatIds.length) {
@@ -374,9 +528,27 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       }
 
       this.ensureRenderer();
-      const layout = await this.loadMapLayout();
-      if (layout) {
-        this.renderer?.setLayout(layout);
+      this.renderer?.setMovePreview(null);
+      this.partidaFinished = false;
+      this.showVictory = false;
+      this.winnerInfo = null;
+      this.lastWinnerId = null;
+      this.submittingMove = false;
+      if (mapId != null) {
+        this.currentMapId = mapId;
+      }
+
+      const targetMapId = this.currentMapId;
+      if (targetMapId != null) {
+        const layout = await this.loadMapLayout(targetMapId);
+        if (layout) {
+          this.renderer?.setLayout(layout);
+        }
+      } else if (!this.mapLayout) {
+        const layout = await this.loadMapLayout(undefined);
+        if (layout) {
+          this.renderer?.setLayout(layout);
+        }
       }
 
       await this.initPartidaAndSSE(partidaId);
@@ -405,7 +577,9 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     if (this.currentPartidaId == null) return;
 
     if (this.es) this.es.close();
-    this.es = this.gs.connectEvents(this.currentPartidaId, (state: any) => this.onState(state));
+    this.es = this.gs.connectEvents(this.currentPartidaId, (state: any) => {
+      void this.onState(state);
+    });
   }
 
   private updateUrlParams(partidaId: number | null, barcos: number[]) {
@@ -432,45 +606,94 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       const res = await fetch(`/api/partidas/${partidaId}/state`);
       if (!res.ok) return;
       const data = await res.json();
-      if (data) this.onState(data);
+      if (data) await this.onState(data);
     } catch (err) {
       console.warn('No se pudo obtener snapshot inicial de partida', err);
     }
   }
 
-  private async loadMapLayout(force = false): Promise<MapLayout> {
-    if (this.mapLayout && !force) return this.mapLayout;
+  private async loadMapLayout(mapId?: number | null, force = false): Promise<MapLayout> {
+    const targetId = mapId ?? this.currentMapId ?? null;
+
+    if (targetId != null && !force && this.mapLayoutCache.has(targetId)) {
+      const cached = this.mapLayoutCache.get(targetId)!;
+      this.mapLayout = cached;
+      return cached;
+    }
+
+    if (targetId != null && !force) {
+      const local = this.maps.find((m:any) => Number(m.id) === targetId);
+      if (local && Array.isArray(local.celdas)) {
+        const layout = this.buildLayoutFromPayload(local);
+        this.mapLayoutCache.set(targetId, layout);
+        this.mapLayout = layout;
+        return layout;
+      }
+    }
+
+    if (targetId != null) {
+      try {
+        const res = await fetch(`/api/mapa/${targetId}`);
+        if (res.ok) {
+          const payload = await res.json();
+          const layout = this.buildLayoutFromPayload(payload);
+          this.mapLayoutCache.set(targetId, layout);
+          this.mapLayout = layout;
+          this.currentMapId = targetId;
+          return layout;
+        }
+      } catch (err) {
+        console.warn('No se pudo cargar layout para el mapa seleccionado', err);
+      }
+    }
+
     try {
       const res = await fetch('/api/mapa');
       if (res.ok) {
         const payload = await res.json();
-        const map = Array.isArray(payload) ? payload[0] : payload;
-        if (map) {
-          const columns = Math.max(6, this.pickNumber(map, ['columnas', 'cols', 'width', 'ancho'], 12));
-          const rows = Math.max(6, this.pickNumber(map, ['filas', 'rows', 'height', 'alto'], 18));
-          const cells = Array.isArray(map.celdas)
-            ? map.celdas.map((c:any) => ({
-                x: this.pickNumber(c, ['x', 'columna', 'col', 'posX'], 0),
-                y: this.pickNumber(c, ['y', 'fila', 'row', 'posY'], 0),
-                tipo: String(c.tipo || 'AGUA').toUpperCase() as CellType,
-              }))
-              .filter((c:any) => Number.isFinite(c.x) && Number.isFinite(c.y))
-            : [];
-
-          const hasStart = cells.some((c:any) => c.tipo === 'PARTIDA');
-          const hasFinish = cells.some((c:any) => c.tipo === 'META');
-          if (!hasStart) cells.push({ x: 1, y: rows - 2, tipo: 'PARTIDA' });
-          if (!hasFinish) cells.push({ x: columns - 2, y: 1, tipo: 'META' });
-
-          this.mapLayout = { columns, rows, cells };
-          return this.mapLayout;
+        const list = Array.isArray(payload) ? payload : (payload ? [payload] : []);
+        const fallback = targetId != null
+          ? list.find((m:any) => Number(m.id) === targetId)
+          : list[0];
+        if (fallback) {
+          const resolvedId = Number(fallback.id);
+          const layout = this.buildLayoutFromPayload(fallback);
+          if (Number.isFinite(resolvedId)) {
+            this.mapLayoutCache.set(resolvedId, layout);
+            if (targetId == null) {
+              this.currentMapId = resolvedId;
+            }
+          }
+          this.mapLayout = layout;
+          return layout;
         }
       }
     } catch (err) {
       console.warn('No se pudo cargar layout del mapa desde la API, usando fallback', err);
     }
+
     this.mapLayout = this.buildFallbackLayout();
     return this.mapLayout;
+  }
+
+  private buildLayoutFromPayload(map: any): MapLayout {
+    const columns = Math.max(6, this.pickNumber(map, ['columnas', 'cols', 'width', 'ancho', 'columnCount'], 12));
+    const rows = Math.max(6, this.pickNumber(map, ['filas', 'rows', 'height', 'alto', 'rowCount'], 18));
+    const cells = Array.isArray(map?.celdas)
+      ? map.celdas.map((c:any) => ({
+          x: this.pickNumber(c, ['x', 'columna', 'col', 'posX'], 0),
+          y: this.pickNumber(c, ['y', 'fila', 'row', 'posY'], 0),
+          tipo: String(c.tipo || 'AGUA').toUpperCase() as CellType,
+        }))
+        .filter((c:any) => Number.isFinite(c.x) && Number.isFinite(c.y))
+      : [];
+
+    const hasStart = cells.some((c:any) => c.tipo === 'PARTIDA');
+    const hasFinish = cells.some((c:any) => c.tipo === 'META');
+    if (!hasStart) cells.push({ x: 1, y: rows - 2, tipo: 'PARTIDA' });
+    if (!hasFinish) cells.push({ x: columns - 2, y: 1, tipo: 'META' });
+
+    return { columns, rows, cells };
   }
 
   private buildFallbackLayout(): MapLayout {
@@ -530,6 +753,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     }));
     const highlighted = this.assignedBoatIds.length ? this.assignedBoatIds : this.selectedBoatIds;
     this.renderer.setBoats(boats, this.currentBoatId, highlighted);
+    this.updatePreviewLanding();
   }
 
   private getTurnPool(): number[] {
@@ -576,18 +800,29 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   private applyBoatSnapshot(sel: any) {
     if (!sel) return;
     this.currentBoatId = sel.id;
-    this.vx = Number(sel.velX ?? sel.velocidadX ?? 0);
-    this.vy = Number(sel.velY ?? sel.velocidadY ?? 0);
+    this.baseVx = Number(sel.velX ?? sel.velocidadX ?? 0);
+    this.baseVy = Number(sel.velY ?? sel.velocidadY ?? 0);
+    this.posX = Number(sel.posX ?? 0);
+    this.posY = Number(sel.posY ?? 0);
+    this.pendingDx = 0;
+    this.pendingDy = 0;
     const name = sel.playerName || sel.nombre || sel.jugador?.nombre || sel.jugador?.email || '';
     this.currentPlayerName = name || 'Sin jugador asignado';
-    this.positionLog = [
-      `pos: ${sel.posX ?? 0}, ${sel.posY ?? 0}`,
-      `vel: ${this.vx}, ${this.vy}`,
-    ];
+    this.updatePreviewLanding();
   }
 
-  private onState(state: any) {
+  private async onState(state: any) {
     try {
+      const mapIdRaw = state?.mapaId ?? state?.mapa_id;
+      const mapId = mapIdRaw != null ? Number(mapIdRaw) : null;
+      if (mapId != null && Number.isFinite(mapId) && mapId !== this.currentMapId) {
+        this.currentMapId = mapId;
+        const layout = await this.loadMapLayout(mapId);
+        if (layout) {
+          this.renderer?.setLayout(layout);
+        }
+      }
+
       const barcos = Array.isArray(state?.barcos) ? state.barcos : [];
       this.boatsState = barcos;
       const order = Array.isArray(state?.order)
@@ -611,6 +846,24 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
         this.applyBoatSnapshot(sel);
       }
 
+      const finished = !!state?.finished;
+      this.partidaFinished = finished;
+      if (finished) {
+        const winnerRaw = state?.winner || {};
+        const winnerId = winnerRaw && winnerRaw.id != null ? Number(winnerRaw.id) : null;
+        const label = winnerRaw?.label || winnerRaw?.jugadorNombre || (winnerId != null ? `Barco #${winnerId}` : 'Barco ganador');
+        this.winnerInfo = winnerId != null ? { id: winnerId, label } : null;
+        if (winnerId != null && this.lastWinnerId !== winnerId) {
+          this.lastWinnerId = winnerId;
+          this.showVictory = true;
+        }
+      } else {
+        this.partidaFinished = false;
+        this.winnerInfo = null;
+        this.showVictory = false;
+        this.lastWinnerId = null;
+      }
+
       this.refreshRendererBoats();
       this.updateTurnPointers();
     } catch (e) {
@@ -618,33 +871,82 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  dir(dx: number, dy: number) {
-    this.vx = this.vx + dx;
-    this.vy = this.vy + dy;
+  get targetVx(): number { return this.baseVx + this.pendingDx; }
+  get targetVy(): number { return this.baseVy + this.pendingDy; }
+
+  resetPending() {
+    if (this.partidaFinished) return;
+    this.pendingDx = 0;
+    this.pendingDy = 0;
+    this.updatePreviewLanding();
   }
 
-  applyAdvance() {
-    this.vx = this.vx * 1;
-    this.vy = this.vy * 1;
+  adjustDelta(dx: number, dy: number) {
+    if (this.partidaFinished) return;
+    if (dx !== 0) {
+      this.pendingDx = (this.pendingDx === dx) ? 0 : Math.max(-1, Math.min(1, dx));
+    }
+    if (dy !== 0) {
+      this.pendingDy = (this.pendingDy === dy) ? 0 : Math.max(-1, Math.min(1, dy));
+    }
+    this.updatePreviewLanding();
   }
 
-  toggleAuto() { this.auto = !this.auto; }
+  private updatePreviewLanding() {
+    if (this.partidaFinished) {
+      this.previewPosX = this.posX;
+      this.previewPosY = this.posY;
+      this.renderer?.setMovePreview(null);
+      return;
+    }
+    if (this.currentBoatId == null) {
+      this.previewPosX = 0;
+      this.previewPosY = 0;
+      this.renderer?.setMovePreview(null);
+      return;
+    }
+    const targetVx = this.targetVx;
+    const targetVy = this.targetVy;
+    const previewX = Math.round(this.posX + targetVx);
+    const previewY = Math.round(this.posY + targetVy);
+    this.previewPosX = previewX;
+    this.previewPosY = previewY;
+    this.renderer?.setMovePreview(this.currentBoatId, previewX, previewY);
+  }
 
-  async executeMove() {
+  async confirmMove() {
     if (!this.currentPartidaId || !this.currentBoatId) {
       alert('No hay partida o barco seleccionado');
       return;
     }
+    if (this.partidaFinished) {
+      alert('La partida ya finalizó.');
+      return;
+    }
+    const targetVx = this.targetVx;
+    const targetVy = this.targetVy;
+    if (Math.abs(targetVx - this.baseVx) > 1 || Math.abs(targetVy - this.baseVy) > 1) {
+      alert('Movimiento inválido: sólo puedes modificar la velocidad en ±1 por eje.');
+      return;
+    }
+    this.submittingMove = true;
     try {
-      await this.gs.setBarcoVel(this.currentBoatId, Number(this.vx), Number(this.vy));
+      await this.gs.setBarcoVel(this.currentBoatId, targetVx, targetVy);
       const next = this.findNextBoatId(this.currentBoatId);
       if (next != null && next !== this.currentBoatId) {
         this.handleBoatClick(next);
       } else {
+        this.resetPending();
         this.updateTurnPointers();
       }
     } catch (e:any) {
       alert('Error ejecutando movimiento: ' + (e.message || e));
+    } finally {
+      this.submittingMove = false;
     }
+  }
+
+  closeVictory() {
+    this.showVictory = false;
   }
 }

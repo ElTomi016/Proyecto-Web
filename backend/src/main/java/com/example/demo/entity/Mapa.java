@@ -13,6 +13,7 @@ public class Mapa {
 
     private int filas;
     private int columnas;
+    private String nombre;
 
     @OneToMany(mappedBy = "mapa", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Celda> celdas = new ArrayList<>();
@@ -20,8 +21,13 @@ public class Mapa {
     public Mapa() {}
 
     public Mapa(int filas, int columnas) {
+        this(null, filas, columnas);
+    }
+
+    public Mapa(String nombre, int filas, int columnas) {
         this.filas = filas;
         this.columnas = columnas;
+        this.nombre = nombre;
     }
 
     // getters y setters
@@ -31,6 +37,8 @@ public class Mapa {
     public void setFilas(int filas) { this.filas = filas; }
     public int getColumnas() { return columnas; }
     public void setColumnas(int columnas) { this.columnas = columnas; }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
     public List<Celda> getCeldas() { return celdas; }
     public void setCeldas(List<Celda> celdas) { this.celdas = celdas; }
 }

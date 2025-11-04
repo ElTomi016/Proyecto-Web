@@ -24,17 +24,23 @@ public class PartidaRestController {
     public ResponseEntity<Map<String, Object>> crear(@RequestBody(required = false) PartidaCreateRequest body) {
         String nombre = body != null ? body.nombre() : null;
         List<Long> barcos = body != null && body.barcos() != null ? body.barcos() : List.of();
-        Partida partida = partidaService.createPartida(nombre, barcos);
-        Map<String, Object> response = Map.of(
-                "id", partida.getId(),
-                "nombre", partida.getNombre(),
-                "order", partidaService.getBoatOrderForPartida(partida.getId())
-        );
+        Long mapaId = body != null ? body.mapaId() : null;
+        Partida partida = partidaService.createPartida(nombre, barcos, mapaId);
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("id", partida.getId());
+        response.put("nombre", partida.getNombre());
+        response.put("order", partidaService.getBoatOrderForPartida(partida.getId()));
+        if (partida.getMapa() != null) {
+            response.put("mapaId", partida.getMapa().getId());
+            response.put("mapaNombre", partida.getMapa().getNombre());
+            response.put("mapaFilas", partida.getMapa().getFilas());
+            response.put("mapaColumnas", partida.getMapa().getColumnas());
+        }
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
-    public ResponseEntity<List<Partida>> listar() {
+    public ResponseEntity<List<Map<String, Object>>> listar() {
         return ResponseEntity.ok(partidaService.listPartidas());
     }
 

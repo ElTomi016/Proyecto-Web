@@ -44,6 +44,7 @@ export class MapRenderer {
   private resizeObserver: ResizeObserver | null = null;
   private rafRequested = false;
   private cellSize = 48;
+  private movePreview: { boatId: number; x: number; y: number } | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -140,6 +141,7 @@ export class MapRenderer {
     }
 
     this.drawGrid();
+    this.drawMovePreview();
     this.drawBoats();
   }
 
@@ -230,6 +232,34 @@ export class MapRenderer {
       this.ctx.lineTo(cols * this.cellSize, py);
       this.ctx.stroke();
     }
+  }
+
+  setMovePreview(boatId: number | null, posX?: number, posY?: number) {
+    if (boatId == null || posX == null || posY == null) {
+      this.movePreview = null;
+    } else {
+      this.movePreview = { boatId, x: Number(posX), y: Number(posY) };
+    }
+    this.requestRender();
+  }
+
+  private drawMovePreview() {
+    if (!this.movePreview) return;
+    const { x, y } = this.movePreview;
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (x < 0 || y < 0 || x >= this.layout.columns || y >= this.layout.rows) return;
+    const px = x * this.cellSize;
+    const py = y * this.cellSize;
+    const inset = Math.max(3, Math.floor(this.cellSize * 0.12));
+    this.ctx.save();
+    this.ctx.fillStyle = 'rgba(14,165,233,0.28)';
+    this.ctx.strokeStyle = 'rgba(14,165,233,0.65)';
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.rect(px + inset, py + inset, this.cellSize - inset * 2, this.cellSize - inset * 2);
+    this.ctx.fill();
+    this.ctx.stroke();
+    this.ctx.restore();
   }
 
   private drawBoats() {
