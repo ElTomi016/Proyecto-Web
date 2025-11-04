@@ -1,14 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, NgIf } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { JugadorService, Jugador } from '../../../services/jugador.service';
 
 @Component({
   standalone: true,
   templateUrl: './jugador-form.html',
   styleUrls: ['./jugador-form.css'],
-  imports: [CommonModule, ReactiveFormsModule, NgIf, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, NgIf],
 })
 export class JugadorFormComponent implements OnInit {
   private fb = inject(FormBuilder);

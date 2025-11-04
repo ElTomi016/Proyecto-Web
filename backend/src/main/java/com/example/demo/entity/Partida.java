@@ -1,7 +1,11 @@
 package com.example.demo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class Partida {
@@ -12,6 +16,9 @@ public class Partida {
     private String nombre;
     private Instant creada = Instant.now();
     private boolean activa = true;
+    @JsonIgnore
+    @OneToMany(mappedBy = "partida", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PartidaBarco> barcos = new HashSet<>();
 
     public Partida() {}
     public Partida(String nombre) { this.nombre = nombre; }
@@ -27,4 +34,7 @@ public class Partida {
 
     public boolean isActiva() { return activa; }
     public void setActiva(boolean activa) { this.activa = activa; }
+
+    public Set<PartidaBarco> getPartidaBarcos() { return barcos; }
+    public void setPartidaBarcos(Set<PartidaBarco> barcos) { this.barcos = barcos; }
 }

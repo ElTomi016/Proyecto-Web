@@ -1,13 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ModeloBarcoService, ModeloBarco } from '../../services/modelo-barco.service';
 
 @Component({
   standalone: true,
   templateUrl: './modelos.html',
   styleUrls: ['./modelos.css'],
-  imports: [CommonModule, RouterLink, NgIf, NgFor],
+  imports: [CommonModule, NgIf, NgFor],
 })
 export class ModelosComponent implements OnInit {
   private srv = inject(ModeloBarcoService);

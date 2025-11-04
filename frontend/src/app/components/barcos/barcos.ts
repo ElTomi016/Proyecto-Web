@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, NgIf, NgFor, JsonPipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { CommonModule, NgIf, NgFor } from '@angular/common';
+import { Router } from '@angular/router';
 import { BarcoService, Barco } from '../../services/barco.service';
 
 @Component({
@@ -8,7 +8,7 @@ import { BarcoService, Barco } from '../../services/barco.service';
   standalone: true,
   templateUrl: './barcos.html',
   styleUrls: ['./barcos.css'],
-  imports: [CommonModule, RouterLink, NgIf, NgFor, JsonPipe],
+  imports: [CommonModule, NgIf, NgFor],
 })
 export class BarcosComponent implements OnInit {
   private router = inject(Router);

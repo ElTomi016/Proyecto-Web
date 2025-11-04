@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { BarcoService, BarcoRaw } from '../../../services/barco.service';
 import { JugadorService, Jugador } from '../../../services/jugador.service';
@@ -10,7 +10,7 @@ import { ModeloBarcoService, ModeloBarco } from '../../../services/modelo-barco.
 @Component({
   selector: 'app-barco-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NgIf, NgFor, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, NgIf, NgFor],
   templateUrl: './barco-form.html',
   styleUrls: ['./barco-form.css'],
 })

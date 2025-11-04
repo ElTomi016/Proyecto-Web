@@ -7,9 +7,15 @@ export class GameService {
     return res.json();
   }
 
-  async createPartida(nombre?: string): Promise<any> {
-    const url = nombre ? `${this.base}?nombre=${encodeURIComponent(nombre)}` : this.base;
-    const res = await fetch(url, { method: 'POST' });
+  async createPartida(nombre?: string, barcos?: number[]): Promise<any> {
+    const payload: any = {};
+    if (nombre) payload.nombre = nombre;
+    if (Array.isArray(barcos) && barcos.length) payload.barcos = barcos;
+    const res = await fetch(this.base, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
     if (!res.ok) throw new Error('Error creando partida');
     return res.json();
   }

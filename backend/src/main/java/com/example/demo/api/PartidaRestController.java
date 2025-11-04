@@ -1,6 +1,6 @@
 package com.example.demo.api;
 
-import com.example.demo.entity.Barco;
+import com.example.demo.dto.PartidaCreateRequest;
 import com.example.demo.entity.Partida;
 import com.example.demo.service.PartidaService;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +21,16 @@ public class PartidaRestController {
     }
 
     @PostMapping
-    public ResponseEntity<Partida> crear(@RequestParam(required = false) String nombre) {
-        return ResponseEntity.ok(partidaService.createPartida(nombre));
+    public ResponseEntity<Map<String, Object>> crear(@RequestBody(required = false) PartidaCreateRequest body) {
+        String nombre = body != null ? body.nombre() : null;
+        List<Long> barcos = body != null && body.barcos() != null ? body.barcos() : List.of();
+        Partida partida = partidaService.createPartida(nombre, barcos);
+        Map<String, Object> response = Map.of(
+                "id", partida.getId(),
+                "nombre", partida.getNombre(),
+                "order", partidaService.getBoatOrderForPartida(partida.getId())
+        );
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
@@ -33,6 +41,11 @@ public class PartidaRestController {
     @GetMapping("/{id}/events")
     public SseEmitter events(@PathVariable Long id) {
         return partidaService.registerEmitter(id);
+    }
+
+    @GetMapping("/{id}/state")
+    public ResponseEntity<Map<String, Object>> currentState(@PathVariable Long id) {
+        return ResponseEntity.ok(partidaService.getCurrentStateSnapshot(id));
     }
 
     @PutMapping("/barcos/{barcoId}/pos")

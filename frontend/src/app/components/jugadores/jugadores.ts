@@ -1,13 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, NgFor, NgIf } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { JugadorService, Jugador } from '../../services/jugador.service';
 
 @Component({
   standalone: true,
   templateUrl: './jugadores.html',
   styleUrls: ['./jugadores.css'],
-  imports: [CommonModule, RouterLink, NgIf, NgFor],
+  imports: [CommonModule, NgIf, NgFor],
 })
 export class JugadoresComponent implements OnInit {
   private srv = inject(JugadorService);
