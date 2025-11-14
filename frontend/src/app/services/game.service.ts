@@ -1,5 +1,14 @@
 export class GameService {
-  private base = (window as any).API_BASE_URL ? (window as any).API_BASE_URL + '/partidas' : '/api/partidas';
+  private readonly base: string = this.resolveBaseUrl();
+
+  private resolveBaseUrl(): string {
+    const globalAny = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
+    const root = globalAny?.API_BASE_URL;
+    if (root && typeof root === 'string') {
+      return root.endsWith('/partidas') ? root : `${root.replace(/\/$/, '')}/partidas`;
+    }
+    return '/api/partidas';
+  }
 
   async listPartidas(): Promise<any[]> {
     const res = await fetch(this.base);

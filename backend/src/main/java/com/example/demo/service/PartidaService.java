@@ -432,9 +432,9 @@ public class PartidaService {
     // Resuelve ancho del mapa intentando varios getters/campos por reflexión.
     private int resolveMapWidth(Mapa mapa) {
         if (mapa == null) return 10;
-        Integer v = tryGetIntProperty(mapa, new String[]{"getWidth","getAncho","getColumns","getCols","getColsCount","getXSize","getW"});
+        Integer v = tryGetIntProperty(mapa, new String[]{"getWidth","getAncho","getColumns","getColumnas","getColumnCount","getCols","getColsCount","getXSize","getW"});
         if (v != null) return v;
-        v = tryGetIntField(mapa, new String[]{"width","ancho","columns","cols","colsCount","xSize","w"});
+        v = tryGetIntField(mapa, new String[]{"width","ancho","columns","columnas","columnCount","cols","colsCount","xSize","w"});
         return v == null ? 10 : v;
     }
 
