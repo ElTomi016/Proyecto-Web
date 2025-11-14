@@ -300,6 +300,7 @@ public class PartidaService {
         partida.setFinalizada(null);
         partida.setActiva(true);
         Set<Long> affectedPartidas = new HashSet<>();
+        Set<Long> jugadoresUsados = new HashSet<>();
         LinkedHashSet<Long> uniqueOrdered = new LinkedHashSet<>();
         for (Long boatId : boatIds) {
             if (boatId != null) uniqueOrdered.add(boatId);
@@ -320,6 +321,12 @@ public class PartidaService {
             Optional<Barco> maybeBoat = barcoRepo.findById(currentId);
             if (maybeBoat.isEmpty()) continue;
             Barco barco = maybeBoat.get();
+
+            Long jugadorId = barco.getJugador() != null ? barco.getJugador().getId() : null;
+            if (jugadorId != null && !jugadoresUsados.add(jugadorId)) {
+                continue;
+            }
+
             partidaBarcoRepo.findPartidaIdByBarco(currentId)
                     .filter(prev -> !Objects.equals(prev, partida.getId()))
                     .ifPresent(affectedPartidas::add);

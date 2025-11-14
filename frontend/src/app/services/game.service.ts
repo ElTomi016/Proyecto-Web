@@ -1,4 +1,12 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
+
+@Injectable({ providedIn: 'root' })
 export class GameService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
   private readonly base: string = this.resolveBaseUrl();
 
   private resolveBaseUrl(): string {
@@ -10,53 +18,46 @@ export class GameService {
     return '/api/partidas';
   }
 
-  async listPartidas(): Promise<any[]> {
-    const res = await fetch(this.base);
-    if (!res.ok) throw new Error('Error listando partidas');
-    return res.json();
+  listPartidas(): Promise<any[]> {
+    return firstValueFrom(this.http.get<any[]>(this.base));
   }
 
-  async createPartida(nombre?: string, barcos?: number[], mapaId?: number): Promise<any> {
+  createPartida(nombre?: string, barcos?: number[], mapaId?: number): Promise<any> {
     const payload: any = {};
     if (nombre) payload.nombre = nombre;
     if (Array.isArray(barcos) && barcos.length) payload.barcos = barcos;
     if (mapaId != null && Number.isFinite(mapaId)) payload.mapaId = mapaId;
-    const res = await fetch(this.base, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error('Error creando partida');
-    return res.json();
+    return firstValueFrom(this.http.post<any>(this.base, payload));
+  }
+
+  fetchState(partidaId: number): Promise<any> {
+    return firstValueFrom(this.http.get<any>(`${this.base}/${partidaId}/state`));
   }
 
   connectEvents(partidaId: number, onState: (s: any) => void): EventSource {
-    const url = `${this.base}/${partidaId}/events`;
+    const token = this.auth.token;
+    const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
+    const url = `${this.base}/${partidaId}/events${tokenParam}`;
     const es = new EventSource(url);
     es.addEventListener('state', (ev: MessageEvent) => {
-      try { onState(JSON.parse(ev.data)); } catch { onState(ev.data); }
+      try {
+        onState(JSON.parse(ev.data));
+      } catch {
+        onState(ev.data);
+      }
     });
-    es.onerror = (e) => { console.warn('SSE error', e); es.close(); };
+    es.onerror = (e) => {
+      console.warn('SSE error', e);
+      es.close();
+    };
     return es;
   }
 
-  async setBarcoPos(barcoId: number, x: number, y: number) {
-    const res = await fetch(`/api/partidas/barcos/${barcoId}/pos`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ x, y })
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+  setBarcoPos(barcoId: number, x: number, y: number): Promise<any> {
+    return firstValueFrom(this.http.put(`/api/partidas/barcos/${barcoId}/pos`, { x, y }));
   }
 
-  async setBarcoVel(barcoId: number, vx: number, vy: number) {
-    const res = await fetch(`/api/partidas/barcos/${barcoId}/vel`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vx, vy })
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+  setBarcoVel(barcoId: number, vx: number, vy: number): Promise<any> {
+    return firstValueFrom(this.http.put(`/api/partidas/barcos/${barcoId}/vel`, { vx, vy }));
   }
 }

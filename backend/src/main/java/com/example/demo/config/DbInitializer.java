@@ -5,6 +5,7 @@ import com.example.demo.repository.*;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,17 +19,23 @@ public class DbInitializer {
     private final BarcoRepository barcoRepo;
     private final MapaRepository mapaRepo;
     private final CeldaRepository celdaRepo;
+    private final UserAccountRepository userAccountRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public DbInitializer(JugadorRepository jugadorRepo,
                          ModeloBarcoRepository modeloRepo,
                          BarcoRepository barcoRepo,
                          MapaRepository mapaRepo,
-                         CeldaRepository celdaRepo) {
+                         CeldaRepository celdaRepo,
+                         UserAccountRepository userAccountRepository,
+                         PasswordEncoder passwordEncoder) {
         this.jugadorRepo = jugadorRepo;
         this.modeloRepo = modeloRepo;
         this.barcoRepo = barcoRepo;
         this.mapaRepo = mapaRepo;
         this.celdaRepo = celdaRepo;
+        this.userAccountRepository = userAccountRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
@@ -38,18 +45,55 @@ public class DbInitializer {
         seedModelos();
         seedMapas();
         seedBarcos();
+        syncJugadorAccounts();
+        seedAdmin();
     }
 
     private void seedJugadores() {
-        if (jugadorRepo.count() > 0) {
+        if (jugadorRepo.count() == 0) {
+            List<Jugador> jugadores = new ArrayList<>();
+            for (int i = 1; i <= 5; i++) {
+                Jugador j = new Jugador("Jugador " + i, "jugador" + i + "@correo.com");
+                jugadores.add(j);
+            }
+            jugadorRepo.saveAll(jugadores);
+        }
+    }
+
+    private void syncJugadorAccounts() {
+        List<Jugador> jugadores = jugadorRepo.findAll();
+        for (Jugador jugador : jugadores) {
+            ensureJugadorUser(jugador);
+        }
+    }
+
+    private void ensureJugadorUser(Jugador jugador) {
+        if (jugador == null || jugador.getId() == null) {
             return;
         }
-        List<Jugador> jugadores = new ArrayList<>();
-        for (int i = 1; i <= 5; i++) {
-            Jugador j = new Jugador("Jugador " + i, "jugador" + i + "@correo.com");
-            jugadores.add(j);
-        }
-        jugadorRepo.saveAll(jugadores);
+        String username = "jugador" + jugador.getId();
+        String rawPassword = username + "123";
+
+        UserAccount account = userAccountRepository.findByUsername(username)
+                .orElseGet(() -> {
+                    UserAccount ua = new UserAccount();
+                    ua.setUsername(username);
+                    return ua;
+                });
+
+        account.setPassword(passwordEncoder.encode(rawPassword));
+        account.setRole(Role.JUGADOR);
+        account.setJugador(jugador);
+        userAccountRepository.save(account);
+    }
+
+    private void seedAdmin() {
+        UserAccount admin = userAccountRepository.findByUsername("admin")
+                .orElseGet(() -> new UserAccount("admin", null, Role.ADMIN, null));
+        admin.setPassword(passwordEncoder.encode("admin123"));
+        admin.setRole(Role.ADMIN);
+        admin.setJugador(null);
+        userAccountRepository.save(admin);
     }
 
     private void seedModelos() {

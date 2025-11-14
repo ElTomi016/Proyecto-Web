@@ -2,9 +2,11 @@ import { Component, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@ang
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { GameService } from '../../services/game.service';
 import { Barco, BarcoService } from '../../services/barco.service';
+import { AuthService, UserRole } from '../../services/auth.service';
 import { CellType, MapLayout, MapRenderer } from './map-renderer';
 
 type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
@@ -122,16 +124,22 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
             </div>
 
             <div *ngIf="loadingBarcos" class="empty-state">Cargando barcos…</div>
+            <p class="player-hint" *ngIf="!isAdmin && barcos.length">
+              Solo puedes seleccionar un barco por partida.
+            </p>
             <div *ngIf="!loadingBarcos && !barcos.length" class="empty-state">
-              Aún no hay barcos registrados. Puedes crearlos desde el panel de administración.
+              {{ isAdmin
+                ? 'Aún no hay barcos registrados. Puedes crearlos desde el panel de administración.'
+                : 'No tienes barcos asignados todavía. Pide a un administrador que te asigne un barco.' }}
             </div>
 
-            <div class="ship-grid">
+            <div class="ship-grid" *ngIf="barcos.length">
               <label *ngFor="let barco of barcos" class="ship-card">
                 <input
                   type="checkbox"
                   [checked]="selectedBoatSet.has(barco.id)"
                   (change)="toggleBoat(barco.id, $event.target.checked)"
+                  [disabled]="!isAdmin && !selectedBoatSet.has(barco.id) && selectedBoatSet.size >= 1"
                 />
                 <div>
                   <strong>#{{ barco.id }} {{ barco.modelo?.nombreModelo || 'Sin modelo' }}</strong>
@@ -243,7 +251,6 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   @ViewChild('canvasRoot', { static: true, read: ElementRef }) canvasRoot!: ElementRef<HTMLElement>;
   @ViewChild('mapCanvas', { static: true, read: ElementRef }) mapCanvas!: ElementRef<HTMLCanvasElement>;
 
-  gs = new GameService();
   viewStep: GameViewStep = 'menu';
   partidas: any[] = [];
   barcos: Barco[] = [];
@@ -284,15 +291,40 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   private mapLayout: MapLayout | null = null;
   private boatsState: any[] = [];
   private assignedBoatIds: number[] = [];
+  role: UserRole | null = null;
+  isAdmin = false;
+  private authSub?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private barcoService: BarcoService,
-  ) {}
+    private auth: AuthService,
+    private gs: GameService,
+    private http: HttpClient,
+  ) {
+    this.setRole(this.auth.role);
+    this.authSub = this.auth.authStateChanges().subscribe(state => this.setRole(state?.role ?? null));
+  }
+
+  private setRole(role: UserRole | null) {
+    this.role = role;
+    this.isAdmin = role === 'ADMIN';
+    if (!this.isAdmin && this.selectedBoatSet.size > 1) {
+      const [first] = Array.from(this.selectedBoatSet.values());
+      this.selectedBoatSet.clear();
+      if (typeof first === 'number') {
+        this.selectedBoatSet.add(first);
+      }
+    }
+  }
 
   get selectedBoatIds(): number[] {
-    return Array.from(this.selectedBoatSet.values());
+    const ids = Array.from(this.selectedBoatSet.values());
+    if (this.isAdmin) {
+      return ids;
+    }
+    return ids.length ? [ids[0]] : [];
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -319,6 +351,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.authSub?.unsubscribe();
     if (this.es) { this.es.close(); this.es = null; }
     this.renderer?.setMovePreview(null);
     this.renderer?.destroy();
@@ -388,8 +421,14 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   }
 
   toggleBoat(id: number, checked: boolean) {
-    if (checked) this.selectedBoatSet.add(id);
-    else this.selectedBoatSet.delete(id);
+    if (checked) {
+      if (!this.isAdmin) {
+        this.selectedBoatSet.clear();
+      }
+      this.selectedBoatSet.add(id);
+    } else {
+      this.selectedBoatSet.delete(id);
+    }
     this.refreshRendererBoats();
     this.updateTurnPointers();
   }
@@ -475,12 +514,22 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     if (!force && this.barcos.length) return;
     this.loadingBarcos = true;
     try {
+      const [previousSelection] = this.selectedBoatIds;
       this.barcos = await firstValueFrom(this.barcoService.getAll());
+      if (!this.isAdmin) {
+        this.selectedBoatSet.clear();
+        const preferred = this.barcos.find(b => b.id === previousSelection) ?? this.barcos[0];
+        if (preferred) {
+          this.selectedBoatSet.add(preferred.id);
+        }
+      }
     } catch (e) {
       console.warn('No se pudo obtener la lista de barcos', e);
       this.barcos = [];
     } finally {
       this.loadingBarcos = false;
+      this.refreshRendererBoats();
+      this.updateTurnPointers();
     }
   }
 
@@ -488,11 +537,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     if (!force && this.maps.length) return;
     this.loadingMaps = true;
     try {
-      const res = await fetch('/api/mapa');
-      if (!res.ok) {
-        throw new Error('Respuesta no exitosa al consultar mapas');
-      }
-      const payload = await res.json();
+      const payload = await firstValueFrom(this.http.get<any>('/api/mapa'));
       const list = Array.isArray(payload) ? payload : (payload ? [payload] : []);
       this.maps = list.map((m:any) => ({
         id: Number(m.id),
@@ -603,9 +648,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
 
   private async fetchSnapshot(partidaId: number) {
     try {
-      const res = await fetch(`/api/partidas/${partidaId}/state`);
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await this.gs.fetchState(partidaId);
       if (data) await this.onState(data);
     } catch (err) {
       console.warn('No se pudo obtener snapshot inicial de partida', err);
@@ -633,9 +676,8 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
 
     if (targetId != null) {
       try {
-        const res = await fetch(`/api/mapa/${targetId}`);
-        if (res.ok) {
-          const payload = await res.json();
+        const payload = await firstValueFrom(this.http.get<any>(`/api/mapa/${targetId}`));
+        if (payload) {
           const layout = this.buildLayoutFromPayload(payload);
           this.mapLayoutCache.set(targetId, layout);
           this.mapLayout = layout;
@@ -648,25 +690,22 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     }
 
     try {
-      const res = await fetch('/api/mapa');
-      if (res.ok) {
-        const payload = await res.json();
-        const list = Array.isArray(payload) ? payload : (payload ? [payload] : []);
-        const fallback = targetId != null
-          ? list.find((m:any) => Number(m.id) === targetId)
-          : list[0];
-        if (fallback) {
-          const resolvedId = Number(fallback.id);
-          const layout = this.buildLayoutFromPayload(fallback);
-          if (Number.isFinite(resolvedId)) {
-            this.mapLayoutCache.set(resolvedId, layout);
-            if (targetId == null) {
-              this.currentMapId = resolvedId;
-            }
+      const payload = await firstValueFrom(this.http.get<any>('/api/mapa'));
+      const list = Array.isArray(payload) ? payload : (payload ? [payload] : []);
+      const fallback = targetId != null
+        ? list.find((m:any) => Number(m.id) === targetId)
+        : list[0];
+      if (fallback) {
+        const resolvedId = Number(fallback.id);
+        const layout = this.buildLayoutFromPayload(fallback);
+        if (Number.isFinite(resolvedId)) {
+          this.mapLayoutCache.set(resolvedId, layout);
+          if (targetId == null) {
+            this.currentMapId = resolvedId;
           }
-          this.mapLayout = layout;
-          return layout;
         }
+        this.mapLayout = layout;
+        return layout;
       }
     } catch (err) {
       console.warn('No se pudo cargar layout del mapa desde la API, usando fallback', err);

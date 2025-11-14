@@ -3,6 +3,7 @@ package com.example.demo.api;
 import com.example.demo.entity.Jugador;
 import com.example.demo.repository.JugadorRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -30,12 +31,14 @@ public class JugadorRestController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Jugador> create(@RequestBody Jugador jugador) {
         Jugador saved = repo.save(jugador);
         return ResponseEntity.created(URI.create("/api/jugadores/" + saved.getId())).body(saved);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Jugador> update(@PathVariable Long id, @RequestBody Jugador jugador) {
         return repo.findById(id).map(existing -> {
             existing.setNombre(jugador.getNombre());
@@ -45,6 +48,7 @@ public class JugadorRestController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!repo.existsById(id)) return ResponseEntity.notFound().build();
         repo.deleteById(id);

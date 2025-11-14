@@ -27,4 +27,9 @@ public interface BarcoRepository extends JpaRepository<Barco, Long> {
            left join b.modelo m
            """)
     List<BarcoDto> findAllDto();
+
+    List<Barco> findByJugadorIdOrderByIdAsc(Long jugadorId);
+
+    @Query("select b.id from Barco b where b.jugador.id = :jugadorId order by b.id asc")
+    List<Long> findIdsByJugadorId(Long jugadorId);
 }

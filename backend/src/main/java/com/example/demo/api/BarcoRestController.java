@@ -3,14 +3,18 @@ package com.example.demo.api;
 import com.example.demo.entity.Barco;
 import com.example.demo.entity.Jugador;
 import com.example.demo.entity.ModeloBarco;
+import com.example.demo.entity.Role;
 import com.example.demo.repository.BarcoRepository;
 import com.example.demo.repository.JugadorRepository;
 import com.example.demo.repository.ModeloBarcoRepository;
+import com.example.demo.security.CurrentUserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/barcos")
@@ -19,24 +23,39 @@ public class BarcoRestController {
     private final BarcoRepository barcoRepo;
     private final JugadorRepository jugadorRepo;
     private final ModeloBarcoRepository modeloRepo;
+    private final CurrentUserService currentUserService;
 
     public BarcoRestController(BarcoRepository barcoRepo,
                                JugadorRepository jugadorRepo,
-                               ModeloBarcoRepository modeloRepo) {
+                               ModeloBarcoRepository modeloRepo,
+                               CurrentUserService currentUserService) {
         this.barcoRepo = barcoRepo;
         this.jugadorRepo = jugadorRepo;
         this.modeloRepo = modeloRepo;
+        this.currentUserService = currentUserService;
     }
 
     @GetMapping
     public List<Barco> list() {
-        return barcoRepo.findAll();
+        if (currentUserService.hasRole(Role.ADMIN)) {
+            return barcoRepo.findAll();
+        }
+        return currentUserService.getJugador()
+                .map(j -> barcoRepo.findByJugadorIdOrderByIdAsc(j.getId()))
+                .orElse(List.of());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Barco> get(@PathVariable Long id) {
-        return barcoRepo.findById(id).map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Barco> maybeBoat = barcoRepo.findById(id);
+        if (maybeBoat.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Barco boat = maybeBoat.get();
+        if (!canAccessBoat(boat)) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(boat);
     }
 
     // Para crear desde Angular enviando ids relacionados
@@ -45,6 +64,7 @@ public class BarcoRestController {
             Long jugadorId, Long modeloId) {}
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> create(@RequestBody BarcoPayload body) {
         Jugador jugador = jugadorRepo.findById(body.jugadorId()).orElse(null);
         ModeloBarco modelo = modeloRepo.findById(body.modeloId()).orElse(null);
@@ -63,6 +83,7 @@ public class BarcoRestController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody BarcoPayload body) {
         return barcoRepo.findById(id).map(existing -> {
             if (body.posX() != null) existing.setPosX(body.posX());
@@ -85,9 +106,20 @@ public class BarcoRestController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!barcoRepo.existsById(id)) return ResponseEntity.notFound().build();
         barcoRepo.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean canAccessBoat(Barco boat) {
+        if (boat == null) return false;
+        if (currentUserService.hasRole(Role.ADMIN)) {
+            return true;
+        }
+        return currentUserService.getJugador()
+                .map(j -> boat.getJugador() != null && j.getId().equals(boat.getJugador().getId()))
+                .orElse(false);
     }
 }

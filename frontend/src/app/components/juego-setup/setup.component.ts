@@ -2,6 +2,8 @@ import { Component, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { GameService } from '../../services/game.service';
 
 @Component({
@@ -48,21 +50,23 @@ export class JuegoSetupComponent implements AfterViewInit {
   jugadores: any[] = [];
   selectedMapId: number | null = null;
   selectedPlayers = new Set<number>();
-  gs = new GameService();
-
-  constructor(private router: Router) {}
+  constructor(private router: Router, private gs: GameService, private http: HttpClient) {}
 
   async ngAfterViewInit() {
     // intentar cargar mapas y jugadores (si endpoints disponibles)
     try {
-      const m = await fetch('/api/mapas').then(r => r.ok ? r.json() : []);
+      const m = await firstValueFrom(this.http.get<any[]>('/api/mapa'));
       this.mapas = Array.isArray(m) ? m : [];
       if (this.mapas.length) this.selectedMapId = this.mapas[0].id;
-    } catch { this.mapas = []; }
+    } catch {
+      this.mapas = [];
+    }
     try {
-      const j = await fetch('/api/jugadores').then(r => r.ok ? r.json() : []);
+      const j = await firstValueFrom(this.http.get<any[]>('/api/jugadores'));
       this.jugadores = Array.isArray(j) ? j : [];
-    } catch { this.jugadores = []; }
+    } catch {
+      this.jugadores = [];
+    }
   }
 
   toggleJugador(id:number, checked:boolean) {
