@@ -52,6 +52,10 @@ export class AuthService {
     return this.state$.value?.role ?? null;
   }
 
+  get jugadorId(): number | null {
+    return this.state$.value?.jugadorId ?? null;
+  }
+
   get username(): string | null {
     return this.state$.value?.username ?? null;
   }

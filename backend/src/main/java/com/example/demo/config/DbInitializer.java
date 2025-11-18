@@ -3,6 +3,7 @@ package com.example.demo.config;
 import com.example.demo.entity.*;
 import com.example.demo.repository.*;
 import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Random;
 
 @Component
+@Profile("!integration-testing")
 public class DbInitializer {
 
     private final JugadorRepository jugadorRepo;

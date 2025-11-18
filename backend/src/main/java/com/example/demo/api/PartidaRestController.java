@@ -74,14 +74,19 @@ public class PartidaRestController {
     @PutMapping("/barcos/{barcoId}/pos")
     @PreAuthorize("hasAnyRole('ADMIN','JUGADOR')")
     public ResponseEntity<?> moverBarco(@PathVariable Long barcoId, @RequestBody Map<String, Integer> body) {
-        if (!canControlBoat(barcoId)) {
+        boolean isAdmin = currentUserService.hasRole(Role.ADMIN);
+        if (!isAdmin && !canControlBoat(barcoId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No puedes controlar este barco");
         }
         Integer x = body.get("x");
         Integer y = body.get("y");
-        return partidaService.updateBarcoPos(barcoId, x, y)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        try {
+            return partidaService.updateBarcoPos(barcoId, x, y)
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+        }
     }
 
     @PutMapping("/barcos/{barcoId}/vel")
@@ -92,9 +97,13 @@ public class PartidaRestController {
         }
         Integer vx = body.get("vx");
         Integer vy = body.get("vy");
-        return partidaService.updateBarcoVel(barcoId, vx, vy)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        try {
+            return partidaService.updateBarcoVel(barcoId, vx, vy)
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+        }
     }
 
     private List<Long> sanitizeBoatSelection(List<Long> requested) {
@@ -125,9 +134,6 @@ public class PartidaRestController {
     }
 
     private boolean canControlBoat(Long barcoId) {
-        if (currentUserService.hasRole(Role.ADMIN)) {
-            return true;
-        }
         return currentUserService.getJugador()
                 .flatMap(jugador -> barcoRepository.findById(barcoId)
                         .map(boat -> boat.getJugador() != null && jugador.getId().equals(boat.getJugador().getId())))

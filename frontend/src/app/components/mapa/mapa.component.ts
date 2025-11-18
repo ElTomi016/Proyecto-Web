@@ -181,7 +181,7 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
           </div>
 
           <aside class="control-panel">
-            <div class="turn-pill">Turno Barco #{{ currentBoatId ?? '-' }}</div>
+            <div class="turn-pill">Turno Barco #{{ turnBoatId ?? '-' }}</div>
 
             <div class="panel-card movement-card">
               <h4 class="panel-title">Control de movimiento</h4>
@@ -211,7 +211,7 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
                 Próxima celda: <strong>{{ previewPosX }}, {{ previewPosY }}</strong>
               </div>
 
-              <button class="confirm-btn" (click)="confirmMove()" [disabled]="submittingMove || !currentBoatId || partidaFinished">
+              <button class="confirm-btn" (click)="confirmMove()" [disabled]="!canConfirmMove">
                 {{ submittingMove ? 'Enviando…' : 'Confirmar movimiento' }}
               </button>
             </div>
@@ -270,6 +270,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   currentPlayerName = '';
   baseVx = 0;
   baseVy = 0;
+  turnBoatId: number | null = null;
   pendingDx = 0;
   pendingDy = 0;
   posX = 0;
@@ -282,6 +283,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   winnerInfo: { id: number; label: string } | null = null;
   lastWinnerId: number | null = null;
   mapReady = false;
+  playerBoatIds: number[] = [];
 
   readonly selectedBoatSet = new Set<number>();
 
@@ -293,6 +295,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
   private assignedBoatIds: number[] = [];
   role: UserRole | null = null;
   isAdmin = false;
+  private currentJugadorId: number | null = null;
   private authSub?: Subscription;
 
   constructor(
@@ -304,7 +307,11 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     private http: HttpClient,
   ) {
     this.setRole(this.auth.role);
-    this.authSub = this.auth.authStateChanges().subscribe(state => this.setRole(state?.role ?? null));
+    this.currentJugadorId = this.auth.jugadorId;
+    this.authSub = this.auth.authStateChanges().subscribe(state => {
+      this.currentJugadorId = state?.jugadorId ?? null;
+      this.setRole(state?.role ?? null);
+    });
   }
 
   private setRole(role: UserRole | null) {
@@ -391,6 +398,8 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     this.showVictory = false;
     this.winnerInfo = null;
     this.lastWinnerId = null;
+    this.turnBoatId = null;
+    this.playerBoatIds = [];
     this.currentMapId = null;
     this.mapLayout = null;
     this.updateUrlParams(null, []);
@@ -790,7 +799,9 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       posY: Number(b.posY ?? 0),
       label: b.playerName || b.nombre || b.jugador?.nombre || `#${b.id}`,
     }));
-    const highlighted = this.assignedBoatIds.length ? this.assignedBoatIds : this.selectedBoatIds;
+    const highlighted = this.playerBoatIds.length
+      ? this.playerBoatIds
+      : (this.assignedBoatIds.length ? this.assignedBoatIds : this.selectedBoatIds);
     this.renderer.setBoats(boats, this.currentBoatId, highlighted);
     this.updatePreviewLanding();
   }
@@ -822,8 +833,9 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       this.nextBoatId = order[0];
       return;
     }
-    const next = this.findNextBoatId(this.currentBoatId);
-    this.nextBoatId = next === this.currentBoatId ? this.findNextBoatId(next) : next;
+    const reference = this.turnBoatId ?? this.currentBoatId ?? order[0];
+    const next = this.findNextBoatId(reference);
+    this.nextBoatId = next === reference ? this.findNextBoatId(next) : next;
   }
 
   private handleBoatClick(boatId: number | null, _cellX?: number, _cellY?: number) {
@@ -875,14 +887,25 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
           order.forEach((id: number) => this.selectedBoatSet.add(id));
         }
       }
-      if (!this.currentBoatId && barcos.length) {
-        this.currentBoatId = barcos[0].id;
-      } else if ((this.currentBoatId == null || !barcos.some((b:any) => b.id === this.currentBoatId)) && order.length) {
-        this.currentBoatId = order[0];
+      const turnRaw = state?.currentTurnBoatId ?? state?.turnBoatId ?? state?.turnoActualBarcoId;
+      const maybeTurn = Number(turnRaw);
+      this.turnBoatId = Number.isFinite(maybeTurn) ? maybeTurn : null;
+      if (this.currentJugadorId != null) {
+        this.playerBoatIds = barcos
+          .filter((b:any) => Number(b.jugadorId ?? b.jugador?.id) === this.currentJugadorId)
+          .map((b:any) => Number(b.id));
+      } else {
+        this.playerBoatIds = [];
       }
-      const sel = barcos.find((b:any) => b.id === this.currentBoatId) || barcos[0];
-      if (sel) {
-        this.applyBoatSnapshot(sel);
+      const currentSnapshot = this.currentBoatId != null ? barcos.find((b:any) => b.id === this.currentBoatId) : null;
+      const turnSnapshot = this.turnBoatId != null ? barcos.find((b:any) => b.id === this.turnBoatId) : null;
+      const shouldFocusTurn = !!(turnSnapshot && this.turnBoatId != null && this.playerBoatIds.includes(this.turnBoatId));
+      if (shouldFocusTurn && turnSnapshot) {
+        this.applyBoatSnapshot(turnSnapshot);
+      } else if (!currentSnapshot && (turnSnapshot || barcos[0])) {
+        this.applyBoatSnapshot(turnSnapshot ?? barcos[0]);
+      } else if (currentSnapshot) {
+        this.applyBoatSnapshot(currentSnapshot);
       }
 
       const finished = !!state?.finished;
@@ -912,6 +935,14 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
 
   get targetVx(): number { return this.baseVx + this.pendingDx; }
   get targetVy(): number { return this.baseVy + this.pendingDy; }
+  get canConfirmMove(): boolean {
+    if (this.submittingMove || this.partidaFinished) return false;
+    if (!this.currentBoatId || !this.turnBoatId) return false;
+    if (this.currentBoatId !== this.turnBoatId) return false;
+    if (this.isAdmin) return false;
+    if (this.playerBoatIds.length && !this.playerBoatIds.includes(this.currentBoatId)) return false;
+    return true;
+  }
 
   resetPending() {
     if (this.partidaFinished) return;
@@ -958,8 +989,8 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       alert('No hay partida o barco seleccionado');
       return;
     }
-    if (this.partidaFinished) {
-      alert('La partida ya finalizó.');
+    if (!this.canConfirmMove) {
+      alert(this.partidaFinished ? 'La partida ya finalizó.' : 'Espera tu turno para mover este barco.');
       return;
     }
     const targetVx = this.targetVx;
@@ -971,15 +1002,10 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     this.submittingMove = true;
     try {
       await this.gs.setBarcoVel(this.currentBoatId, targetVx, targetVy);
-      const next = this.findNextBoatId(this.currentBoatId);
-      if (next != null && next !== this.currentBoatId) {
-        this.handleBoatClick(next);
-      } else {
-        this.resetPending();
-        this.updateTurnPointers();
-      }
+      this.resetPending();
     } catch (e:any) {
-      alert('Error ejecutando movimiento: ' + (e.message || e));
+      const serverMsg = e?.error?.error ?? e?.error?.message ?? e?.message ?? e;
+      alert('Error ejecutando movimiento: ' + serverMsg);
     } finally {
       this.submittingMove = false;
     }

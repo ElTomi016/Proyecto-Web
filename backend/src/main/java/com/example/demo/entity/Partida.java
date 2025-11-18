@@ -18,6 +18,10 @@ public class Partida {
     private boolean activa = true;
     private Long ganadorBarcoId;
     private Instant finalizada;
+    @Column(name = "turno_index")
+    private Integer turnoIndex = 0;
+    @Column(name = "turno_barco_id")
+    private Long turnoBarcoId;
     @JsonIgnore
     @OneToMany(mappedBy = "partida", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PartidaBarco> barcos = new HashSet<>();
@@ -52,4 +56,20 @@ public class Partida {
 
     public Mapa getMapa() { return mapa; }
     public void setMapa(Mapa mapa) { this.mapa = mapa; }
+
+    public Integer getTurnoIndex() {
+        return turnoIndex;
+    }
+
+    public void setTurnoIndex(Integer turnoIndex) {
+        this.turnoIndex = turnoIndex;
+    }
+
+    public Long getTurnoBarcoId() {
+        return turnoBarcoId;
+    }
+
+    public void setTurnoBarcoId(Long turnoBarcoId) {
+        this.turnoBarcoId = turnoBarcoId;
+    }
 }

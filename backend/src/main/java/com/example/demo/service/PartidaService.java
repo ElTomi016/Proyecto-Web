@@ -34,6 +34,7 @@ public class PartidaService {
 
     // emisores SSE por partida
     private final Map<Long, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
+    private record MoveResult(boolean moved, boolean destroyed, boolean reachedGoal) {}
 
     public PartidaService(BarcoRepository barcoRepo,
                           PartidaRepository partidaRepo,
@@ -221,6 +222,10 @@ public class PartidaService {
     }
 
     private Map<String, Object> buildStatePayload(Long partidaId) {
+        Partida partida = partidaId != null ? partidaRepo.findById(partidaId).orElse(null) : null;
+        if (partida != null) {
+            ensureTurnPointer(partida);
+        }
         List<Long> order = getBoatOrder(partidaId);
         Map<Long, Map<String, Object>> boatMap = barcoRepo.findAllById(order).stream()
                 .collect(Collectors.toMap(Barco::getId, this::toMap));
@@ -251,6 +256,13 @@ public class PartidaService {
         state.put("ts", System.currentTimeMillis());
         state.put("winner", winnerData);
         state.put("finished", winnerId != null);
+        if (partida != null) {
+            state.put("currentTurnBoatId", partida.getTurnoBarcoId());
+            state.put("currentTurnIndex", partida.getTurnoIndex());
+        } else {
+            state.put("currentTurnBoatId", null);
+            state.put("currentTurnIndex", null);
+        }
         Mapa mapa = getMapaForPartidaId(partidaId);
         if (mapa != null) {
             state.put("mapaId", mapa.getId());
@@ -347,13 +359,21 @@ public class PartidaService {
             PartidaBarco link = new PartidaBarco(partida, barco, index++);
             partidaBarcoRepo.save(link);
         }
+        List<Long> order = getBoatOrder(partida.getId());
+        if (order.isEmpty()) {
+            partida.setTurnoBarcoId(null);
+            partida.setTurnoIndex(null);
+        } else {
+            partida.setTurnoIndex(0);
+            partida.setTurnoBarcoId(order.get(0));
+        }
         partidaRepo.save(partida);
         affectedPartidas.forEach(this::broadcastState);
         broadcastState(partida.getId());
     }
 
-    private boolean applyPlannedMove(Barco barco, Mapa mapa, List<Barco> snapshot, Long partidaId) {
-        if (barco == null) return false;
+    private MoveResult applyPlannedMove(Barco barco, Mapa mapa, Long partidaId) {
+        if (barco == null) return new MoveResult(false, false, false);
         int mapWidth = resolveMapWidth(mapa);
         int mapHeight = resolveMapHeight(mapa);
 
@@ -364,22 +384,9 @@ public class PartidaService {
         final int ny = Math.min(Math.max(proposedY, 0), mapHeight > 0 ? mapHeight - 1 : proposedY);
 
         Optional<Celda> targetCell = mapa != null ? findCelda(mapa, nx, ny) : Optional.empty();
-        boolean blockedByCell = targetCell
+        boolean hitsWall = targetCell
                 .map(c -> c.getTipo() != null && c.getTipo() == Celda.Tipo.PARED)
                 .orElse(false);
-
-        boolean collision = snapshot.stream().anyMatch(other ->
-                other.getId() != null &&
-                        !other.getId().equals(barco.getId()) &&
-                        safeInt(other.getPosX()) == nx &&
-                        safeInt(other.getPosY()) == ny
-        );
-
-        if (blockedByCell || collision) {
-            barco.setVelocidadX(0);
-            barco.setVelocidadY(0);
-            return false;
-        }
 
         barco.setPosX(nx);
         barco.setPosY(ny);
@@ -390,9 +397,14 @@ public class PartidaService {
             registerWinner(partidaId, barco);
             barco.setVelocidadX(0);
             barco.setVelocidadY(0);
-            return true;
+            return new MoveResult(true, false, true);
         }
-        return true;
+        if (hitsWall) {
+            barco.setVelocidadX(0);
+            barco.setVelocidadY(0);
+            return new MoveResult(true, true, false);
+        }
+        return new MoveResult(true, false, false);
     }
 
     // API para mover un barco (llamada desde frontend)
@@ -411,29 +423,131 @@ public class PartidaService {
     public Optional<Barco> updateBarcoVel(Long barcoId, Integer vx, Integer vy) {
         return barcoRepo.findById(barcoId).map(b -> {
             Long partidaId = partidaBarcoRepo.findPartidaIdByBarco(barcoId).orElse(null);
+            if (partidaId == null) {
+                throw new IllegalStateException("El barco no está asignado a una partida activa.");
+            }
+            Partida partida = partidaRepo.findById(partidaId)
+                    .orElseThrow(() -> new IllegalStateException("Partida no encontrada para el barco."));
+
             Long winnerId = getWinnerId(partidaId);
-            if (winnerId != null && !Objects.equals(winnerId, barcoId)) {
+            if (winnerId != null) {
                 throw new IllegalStateException("La partida ya finalizó con un ganador.");
             }
 
-            if (vx != null) b.setVelocidadX(vx);
-            if (vy != null) b.setVelocidadY(vy);
+            ensureTurnPointer(partida);
+            if (!Objects.equals(partida.getTurnoBarcoId(), barcoId)) {
+                throw new IllegalStateException("No es el turno de este barco.");
+            }
 
-            Partida partida = partidaId != null ? partidaRepo.findById(partidaId).orElse(null) : null;
-            Mapa mapa = partida != null ? partida.getMapa() : resolveMapaForPartida(null);
-            if (partida != null && partida.getMapa() == null && mapa != null) {
+            int currentVx = safeInt(b.getVelocidadX());
+            int currentVy = safeInt(b.getVelocidadY());
+            int targetVx = vx != null ? vx : currentVx;
+            int targetVy = vy != null ? vy : currentVy;
+            if (Math.abs(targetVx - currentVx) > 1 || Math.abs(targetVy - currentVy) > 1) {
+                throw new IllegalArgumentException("Sólo puedes ajustar la velocidad en ±1 por eje.");
+            }
+            b.setVelocidadX(targetVx);
+            b.setVelocidadY(targetVy);
+
+            Mapa mapa = partida.getMapa() != null ? partida.getMapa() : resolveMapaForPartida(null);
+            if (partida.getMapa() == null && mapa != null) {
                 partida.setMapa(mapa);
                 partidaRepo.save(partida);
             }
-            List<Barco> snapshot = partidaId != null ? getBarcosForPartida(partidaId) : barcoRepo.findAll();
-            applyPlannedMove(b, mapa, snapshot, partidaId);
 
+            MoveResult outcome = applyPlannedMove(b, mapa, partidaId);
             Barco saved = barcoRepo.save(b);
-            if (partidaId != null) {
-                broadcastState(partidaId);
+
+            boolean finished = getWinnerId(partidaId) != null;
+            if (!finished) {
+                if (outcome.destroyed()) {
+                    handleBoatDestruction(partida, barcoId);
+                } else {
+                    advanceTurn(partida, barcoId);
+                }
+            } else if (outcome.destroyed()) {
+                handleBoatDestruction(partida, barcoId);
             }
+
+            broadcastState(partidaId);
             return saved;
         });
+    }
+
+    private void ensureTurnPointer(Partida partida) {
+        if (partida == null || partida.getId() == null) {
+            return;
+        }
+        List<Long> order = getBoatOrder(partida.getId());
+        boolean needsSave = false;
+        if (order.isEmpty()) {
+            if (partida.getTurnoBarcoId() != null || partida.getTurnoIndex() != null) {
+                partida.setTurnoBarcoId(null);
+                partida.setTurnoIndex(null);
+                needsSave = true;
+            }
+        } else {
+            Long current = partida.getTurnoBarcoId();
+            if (current == null || !order.contains(current)) {
+                partida.setTurnoIndex(0);
+                partida.setTurnoBarcoId(order.get(0));
+                needsSave = true;
+            } else {
+                int idx = order.indexOf(current);
+                if (!Objects.equals(partida.getTurnoIndex(), idx)) {
+                    partida.setTurnoIndex(idx);
+                    needsSave = true;
+                }
+            }
+        }
+        if (needsSave) {
+            partidaRepo.save(partida);
+        }
+    }
+
+    private void advanceTurn(Partida partida, Long lastBoatId) {
+        if (partida == null || partida.getId() == null) return;
+        List<Long> order = getBoatOrder(partida.getId());
+        if (order.isEmpty()) {
+            partida.setTurnoBarcoId(null);
+            partida.setTurnoIndex(null);
+        } else {
+            int idx = lastBoatId != null ? order.indexOf(lastBoatId) : -1;
+            int nextIdx = (idx >= 0 ? (idx + 1) % order.size() : 0);
+            partida.setTurnoIndex(nextIdx);
+            partida.setTurnoBarcoId(order.get(nextIdx));
+        }
+        partidaRepo.save(partida);
+    }
+
+    private void handleBoatDestruction(Partida partida, Long barcoId) {
+        if (partida == null || partida.getId() == null || barcoId == null) {
+            return;
+        }
+        partidaBarcoRepo.deleteByBarcoId(barcoId);
+        List<Long> order = getBoatOrder(partida.getId());
+        if (order.isEmpty()) {
+            partida.setTurnoBarcoId(null);
+            partida.setTurnoIndex(null);
+            partida.setActiva(false);
+            if (partida.getFinalizada() == null) {
+                partida.setFinalizada(Instant.now());
+            }
+        } else {
+            if (Objects.equals(partida.getTurnoBarcoId(), barcoId)) {
+                partida.setTurnoIndex(0);
+                partida.setTurnoBarcoId(order.get(0));
+            } else {
+                int idx = order.indexOf(partida.getTurnoBarcoId());
+                if (idx >= 0) {
+                    partida.setTurnoIndex(idx);
+                } else {
+                    partida.setTurnoIndex(0);
+                    partida.setTurnoBarcoId(order.get(0));
+                }
+            }
+        }
+        partidaRepo.save(partida);
     }
 
     // Resuelve ancho del mapa intentando varios getters/campos por reflexión.
