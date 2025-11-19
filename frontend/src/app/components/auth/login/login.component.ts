@@ -9,23 +9,23 @@ import { AuthService } from '../../../services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <section class="login-card">
+    <section class="login-card" id="login-card">
       <h1>Ingreso</h1>
       <p class="subtitle">Autentícate para continuar</p>
-      <form [formGroup]="form" (ngSubmit)="submit()">
+      <form id="login-form" [formGroup]="form" (ngSubmit)="submit()">
         <label>
           Usuario
-          <input type="text" formControlName="username" placeholder="usuario" />
+          <input id="login-username" type="text" formControlName="username" placeholder="usuario" />
         </label>
         <label>
           Contraseña
-          <input type="password" formControlName="password" placeholder="••••••" />
+          <input id="login-password" type="password" formControlName="password" placeholder="••••••" />
         </label>
-        <button type="submit" [disabled]="form.invalid || loading">
+        <button id="login-submit" type="submit" [disabled]="form.invalid || loading">
           {{ loading ? 'Validando...' : 'Ingresar' }}
         </button>
       </form>
-      <p class="error" *ngIf="error">{{ error }}</p>
+      <p class="error" id="login-error" *ngIf="error">{{ error }}</p>
       <div class="helper">
         <p>Admin demo: <code>admin / admin123</code></p>
         <p>Jugador demo: <code>jugador1 / jugador1123</code></p>

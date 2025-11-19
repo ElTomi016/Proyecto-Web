@@ -8,25 +8,25 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
-    <header class="topbar">
-      <div class="brand"><a routerLink="/">Regata Online</a></div>
+    <header class="topbar" id="app-topbar">
+      <div class="brand" id="topbar-brand"><a id="nav-home" routerLink="/">Regata Online</a></div>
       <ng-container *ngIf="authState$ | async as state; else guest">
-        <nav class="nav" *ngIf="state">
+        <nav class="nav" *ngIf="state" id="topbar-nav">
           <ng-container *ngIf="state.role === 'ADMIN'">
-            <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Inicio</a>
-            <a routerLink="/admin/modelos" routerLinkActive="active">Modelos</a>
-            <a routerLink="/admin/barcos" routerLinkActive="active">Barcos</a>
-            <a routerLink="/admin/jugadores" routerLinkActive="active">Jugadores</a>
+            <a id="nav-admin-home" routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Inicio</a>
+            <a id="nav-admin-modelos" routerLink="/admin/modelos" routerLinkActive="active">Modelos</a>
+            <a id="nav-admin-barcos" routerLink="/admin/barcos" routerLinkActive="active">Barcos</a>
+            <a id="nav-admin-jugadores" routerLink="/admin/jugadores" routerLinkActive="active">Jugadores</a>
           </ng-container>
-          <a routerLink="/juego" routerLinkActive="active" class="game-link">Juego</a>
+          <a id="nav-game" routerLink="/juego" routerLinkActive="active" class="game-link">Juego</a>
         </nav>
-        <div class="user-info">
-          <span>{{ state.username }} · {{ state.role }}</span>
-          <button type="button" (click)="logout()">Salir</button>
+        <div class="user-info" id="topbar-user">
+          <span id="topbar-user-info">{{ state.username }} · {{ state.role }}</span>
+          <button id="topbar-logout" type="button" (click)="logout()">Salir</button>
         </div>
       </ng-container>
       <ng-template #guest>
-        <a routerLink="/login" class="login-link">Iniciar sesión</a>
+        <a id="topbar-login-link" routerLink="/login" class="login-link">Iniciar sesión</a>
       </ng-template>
     </header>
   `,

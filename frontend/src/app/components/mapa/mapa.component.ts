@@ -17,7 +17,7 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
   imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="game-page">
-      <section class="game-launcher" *ngIf="viewStep !== 'playing'">
+      <section class="game-launcher" id="game-launcher" *ngIf="viewStep !== 'playing'">
         <div class="launcher-head">
           <h1>Selecciona cómo quieres empezar</h1>
           <p>
@@ -27,27 +27,27 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
         </div>
 
         <div *ngIf="viewStep === 'menu'" class="launcher-grid">
-          <button class="launcher-card" (click)="enterLoadMode()">
+          <button id="launcher-load-button" class="launcher-card" (click)="enterLoadMode()">
             <h3>Cargar partida</h3>
             <p>Consulta la lista de partidas creadas y continúa justo donde las dejaste.</p>
           </button>
 
-          <button class="launcher-card" (click)="enterCreateMode()">
+          <button id="launcher-create-button" class="launcher-card" (click)="enterCreateMode()">
             <h3>Crear nueva</h3>
             <p>Asigna un nombre, elige los barcos que jugarán y luego abre el mapa con todo listo.</p>
           </button>
         </div>
 
-        <div *ngIf="viewStep === 'load'" class="launcher-panel">
+        <div *ngIf="viewStep === 'load'" class="launcher-panel" id="load-panel">
           <div class="panel-toolbar">
-            <button class="ghost-btn" (click)="backToMenu()">← Menú</button>
+              <button id="load-back-button" class="ghost-btn" (click)="backToMenu()">← Menú</button>
             <div class="panel-actions">
-              <button class="ghost-btn" (click)="reloadPartidas(true)">Actualizar lista</button>
+              <button id="reload-partidas-button" class="ghost-btn" (click)="reloadPartidas(true)">Actualizar lista</button>
             </div>
           </div>
 
           <h2>Cargar una partida existente</h2>
-          <div class="partida-list">
+          <div class="partida-list" id="partida-list">
             <div *ngIf="loadingPartidas" class="empty-state">Cargando partidas…</div>
             <div *ngIf="!loadingPartidas && !partidas.length" class="empty-state">
               No hay partidas activas todavía. Crea una nueva para comenzar a jugar.
@@ -56,6 +56,8 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
             <article
               *ngFor="let p of partidas"
               class="partida-card"
+              [attr.id]="'partida-card-' + p.id"
+              [attr.data-partida-id]="p.id"
               [class.selected]="p.id === selectedLoadPartidaId"
               (click)="selectExistingPartida(p.id)">
               <div>
@@ -66,22 +68,22 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
             </article>
           </div>
 
-          <button class="primary-btn" [disabled]="!selectedLoadPartidaId" (click)="startExistingGame()">
+          <button id="load-start-button" class="primary-btn" [disabled]="!selectedLoadPartidaId" (click)="startExistingGame()">
             Entrar al mapa
           </button>
         </div>
 
-        <div *ngIf="viewStep === 'create'" class="launcher-panel">
+        <div *ngIf="viewStep === 'create'" class="launcher-panel" id="create-panel">
           <div class="panel-toolbar">
-            <button class="ghost-btn" (click)="backToMenu()">← Menú</button>
+            <button id="create-back-button" class="ghost-btn" (click)="backToMenu()">← Menú</button>
             <div class="panel-actions">
-              <button class="ghost-btn" (click)="reloadBarcos(true)">Recargar barcos</button>
+              <button id="reload-barcos-button" class="ghost-btn" (click)="reloadBarcos(true)">Recargar barcos</button>
             </div>
           </div>
 
           <h2>Crear una nueva partida</h2>
           <label class="field-label">Nombre de la partida (opcional)</label>
-          <input type="text" class="field-input" placeholder="Regata del Pacífico" [(ngModel)]="creatingName" />
+          <input id="partida-name-input" type="text" class="field-input" placeholder="Regata del Pacífico" [(ngModel)]="creatingName" />
 
           <div class="maps-container">
             <div class="ships-header">
@@ -98,8 +100,11 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
               <label
                 *ngFor="let mapa of maps"
                 class="map-card"
+                [attr.id]="'map-card-' + mapa.id"
+                [attr.data-map-id]="mapa.id"
                 [class.selected]="mapa.id === selectedMapId">
                 <input
+                  [attr.id]="'map-option-' + mapa.id"
                   type="radio"
                   name="mapa"
                   [value]="mapa.id"
@@ -136,7 +141,9 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
             <div class="ship-grid" *ngIf="barcos.length">
               <label *ngFor="let barco of barcos" class="ship-card">
                 <input
+                  [attr.id]="'boat-checkbox-' + barco.id"
                   type="checkbox"
+                  [attr.data-boat-id]="barco.id"
                   [checked]="selectedBoatSet.has(barco.id)"
                   (change)="toggleBoat(barco.id, $event.target.checked)"
                   [disabled]="!isAdmin && !selectedBoatSet.has(barco.id) && selectedBoatSet.size >= 1"
@@ -149,28 +156,28 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
             </div>
           </div>
 
-          <button class="primary-btn" [disabled]="creatingMatch || !selectedBoatIds.length || !selectedMapId" (click)="createMatch()">
+          <button id="create-partida-button" class="primary-btn" [disabled]="creatingMatch || !selectedBoatIds.length || !selectedMapId" (click)="createMatch()">
             {{ creatingMatch ? 'Creando…' : 'Crear e iniciar partida' }}
           </button>
         </div>
       </section>
 
-      <section class="map-shell" [class.hidden]="viewStep !== 'playing'">
+      <section class="map-shell" id="map-shell" [class.hidden]="viewStep !== 'playing'">
         <div class="map-shell__top">
-          <button class="ghost-btn" (click)="backToMenu()">← Menú</button>
-          <div class="chip" *ngIf="currentPartidaId">Partida #{{ currentPartidaId }}</div>
-          <div class="chip muted" *ngIf="selectedBoatIds.length">Barcos {{ selectedBoatIds.join(', ') }}</div>
+          <button id="map-back-button" class="ghost-btn" (click)="backToMenu()">← Menú</button>
+          <div class="chip" id="current-partida-chip" *ngIf="currentPartidaId">Partida #{{ currentPartidaId }}</div>
+          <div class="chip muted" id="selected-boats-chip" *ngIf="selectedBoatIds.length">Barcos {{ selectedBoatIds.join(', ') }}</div>
         </div>
 
-        <div class="map-loader" *ngIf="viewStep === 'playing' && !mapReady">
+        <div class="map-loader" id="map-loader" *ngIf="viewStep === 'playing' && !mapReady">
           Preparando mapa y sincronizando barcos…
         </div>
 
-        <div class="map-screen">
-          <div class="map-area">
+        <div class="map-screen" id="map-screen">
+          <div class="map-area" id="map-area">
             <div class="map-area__header">
-              <h3 class="map-title">Mapa</h3>
-              <span class="map-hint" *ngIf="mapReady">Haz clic en un barco para controlarlo</span>
+              <h3 class="map-title" id="map-title">Mapa</h3>
+              <span class="map-hint" id="map-hint" *ngIf="mapReady">Haz clic en un barco para controlarlo</span>
             </div>
             <div #canvasRoot id="map-canvas-root" class="map-canvas-root">
               <canvas #mapCanvas class="map-canvas" aria-label="Tablero de la regata"></canvas>
@@ -180,8 +187,8 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
             </div>
           </div>
 
-          <aside class="control-panel">
-            <div class="turn-pill">Turno Barco #{{ turnBoatId ?? '-' }}</div>
+          <aside class="control-panel" id="control-panel">
+            <div class="turn-pill" id="turn-indicator">Turno Barco #{{ turnBoatId ?? '-' }}</div>
 
             <div class="panel-card movement-card">
               <h4 class="panel-title">Control de movimiento</h4>
@@ -189,41 +196,41 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
               <div class="velocity-display">
                 <div>
                   <small>Velocidad actual</small>
-                  <strong>vx={{ baseVx }} vy={{ baseVy }}</strong>
+                  <strong id="current-velocity">vx={{ baseVx }} vy={{ baseVy }}</strong>
                 </div>
                 <div>
                   <small>Próximo turno</small>
-                  <strong>vx={{ targetVx }} vy={{ targetVy }}</strong>
+                  <strong id="next-velocity">vx={{ targetVx }} vy={{ targetVy }}</strong>
                 </div>
               </div>
 
               <div class="move-pad">
-                <button class="move-btn" (click)="adjustDelta(0,-1)" [class.active]="pendingDy === -1" aria-label="Acelerar hacia arriba">▲</button>
+                <button id="move-up" class="move-btn" (click)="adjustDelta(0,-1)" [class.active]="pendingDy === -1" aria-label="Acelerar hacia arriba">▲</button>
                 <div class="move-middle">
-                  <button class="move-btn" (click)="adjustDelta(-1,0)" [class.active]="pendingDx === -1" aria-label="Acelerar hacia la izquierda">◀</button>
-                  <button class="move-btn reset" (click)="resetPending()" aria-label="Mantener velocidad">•</button>
-                  <button class="move-btn" (click)="adjustDelta(1,0)" [class.active]="pendingDx === 1" aria-label="Acelerar hacia la derecha">▶</button>
+                  <button id="move-left" class="move-btn" (click)="adjustDelta(-1,0)" [class.active]="pendingDx === -1" aria-label="Acelerar hacia la izquierda">◀</button>
+                  <button id="move-hold" class="move-btn reset" (click)="resetPending()" aria-label="Mantener velocidad">•</button>
+                  <button id="move-right" class="move-btn" (click)="adjustDelta(1,0)" [class.active]="pendingDx === 1" aria-label="Acelerar hacia la derecha">▶</button>
                 </div>
-                <button class="move-btn" (click)="adjustDelta(0,1)" [class.active]="pendingDy === 1" aria-label="Acelerar hacia abajo">▼</button>
+                <button id="move-down" class="move-btn" (click)="adjustDelta(0,1)" [class.active]="pendingDy === 1" aria-label="Acelerar hacia abajo">▼</button>
               </div>
 
-              <div class="landing-info">
-                Próxima celda: <strong>{{ previewPosX }}, {{ previewPosY }}</strong>
+              <div class="landing-info" id="landing-preview">
+                Próxima celda: <strong id="landing-coordinates">{{ previewPosX }}, {{ previewPosY }}</strong>
               </div>
 
-              <button class="confirm-btn" (click)="confirmMove()" [disabled]="!canConfirmMove">
+              <button id="confirm-move-button" class="confirm-btn" (click)="confirmMove()" [disabled]="!canConfirmMove">
                 {{ submittingMove ? 'Enviando…' : 'Confirmar movimiento' }}
               </button>
             </div>
 
             <div class="panel-card status-card">
               <h4 class="panel-title">Estado</h4>
-              <div class="player-name">{{ currentPlayerName || 'Sin jugador asignado' }}</div>
-              <div class="stat-line">
+              <div class="player-name" id="player-name-label">{{ currentPlayerName || 'Sin jugador asignado' }}</div>
+              <div class="stat-line" id="current-position">
                 <span class="icon">📍</span>
-                <strong>Posición {{ posX }}, {{ posY }}</strong>
+                <strong id="position-values">Posición {{ posX }}, {{ posY }}</strong>
               </div>
-              <div class="next-turn">Siguiente turno<br><strong>Barco #{{ nextBoatId ?? '-' }}</strong></div>
+              <div class="next-turn" id="next-turn">Siguiente turno<br><strong>Barco #{{ nextBoatId ?? '-' }}</strong></div>
               <div class="victory-note" *ngIf="partidaFinished && winnerInfo">
                 Partida finalizada.
               </div>
@@ -234,12 +241,12 @@ type GameViewStep = 'menu' | 'load' | 'create' | 'playing';
             </div>
           </aside>
         </div>
-        <div class="victory-overlay" *ngIf="showVictory && winnerInfo">
+        <div class="victory-overlay" id="victory-overlay" *ngIf="showVictory && winnerInfo">
           <div class="victory-card">
             <div class="trophy" aria-hidden="true">🏆</div>
             <h2>¡Victoria!</h2>
             <p>El <strong>{{ winnerInfo.label }}</strong> ganó la regata.</p>
-            <button class="victory-btn" type="button" (click)="closeVictory()">Entendido</button>
+            <button id="victory-close-button" class="victory-btn" type="button" (click)="closeVictory()">Entendido</button>
           </div>
         </div>
       </section>

@@ -2,6 +2,7 @@ package com.example.demo.config;
 
 import com.example.demo.entity.*;
 import com.example.demo.repository.*;
+import com.example.demo.service.JugadorAccountService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Random;
 
 @Component
-@Profile("!integration-testing")
+@Profile("!integration-testing & !systemtest")
 public class DbInitializer {
 
     private final JugadorRepository jugadorRepo;
@@ -22,6 +23,7 @@ public class DbInitializer {
     private final MapaRepository mapaRepo;
     private final CeldaRepository celdaRepo;
     private final UserAccountRepository userAccountRepository;
+    private final JugadorAccountService jugadorAccountService;
     private final PasswordEncoder passwordEncoder;
 
     public DbInitializer(JugadorRepository jugadorRepo,
@@ -30,6 +32,7 @@ public class DbInitializer {
                          MapaRepository mapaRepo,
                          CeldaRepository celdaRepo,
                          UserAccountRepository userAccountRepository,
+                         JugadorAccountService jugadorAccountService,
                          PasswordEncoder passwordEncoder) {
         this.jugadorRepo = jugadorRepo;
         this.modeloRepo = modeloRepo;
@@ -37,6 +40,7 @@ public class DbInitializer {
         this.mapaRepo = mapaRepo;
         this.celdaRepo = celdaRepo;
         this.userAccountRepository = userAccountRepository;
+        this.jugadorAccountService = jugadorAccountService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -65,28 +69,8 @@ public class DbInitializer {
     private void syncJugadorAccounts() {
         List<Jugador> jugadores = jugadorRepo.findAll();
         for (Jugador jugador : jugadores) {
-            ensureJugadorUser(jugador);
+            jugadorAccountService.ensureAccountFor(jugador);
         }
-    }
-
-    private void ensureJugadorUser(Jugador jugador) {
-        if (jugador == null || jugador.getId() == null) {
-            return;
-        }
-        String username = "jugador" + jugador.getId();
-        String rawPassword = username + "123";
-
-        UserAccount account = userAccountRepository.findByUsername(username)
-                .orElseGet(() -> {
-                    UserAccount ua = new UserAccount();
-                    ua.setUsername(username);
-                    return ua;
-                });
-
-        account.setPassword(passwordEncoder.encode(rawPassword));
-        account.setRole(Role.JUGADOR);
-        account.setJugador(jugador);
-        userAccountRepository.save(account);
     }
 
     private void seedAdmin() {

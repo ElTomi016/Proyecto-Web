@@ -1,18 +1,18 @@
-<div class="container">
+<div class="container" id="modelo-form-page">
   <h2>{{ titulo }}</h2>
   <div class="error" *ngIf="error">{{ error }}</div>
 
-  <form class="form" [formGroup]="form" (ngSubmit)="guardar()">
+  <form id="modelo-form" class="form" [formGroup]="form" (ngSubmit)="guardar()">
     <label>Nombre del modelo
-      <input formControlName="nombreModelo" />
+      <input id="modelo-nombre" formControlName="nombreModelo" />
     </label>
     <label>Color
-      <input formControlName="color" />
+      <input id="modelo-color" formControlName="color" />
     </label>
 
     <div class="actions">
-      <button class="btn-primary" type="submit" [disabled]="saving">Guardar</button>
-      <button class="btn" type="button" (click)="cancelar()">Cancelar</button>
+      <button id="modelo-save-button" class="btn-primary" type="submit" [disabled]="saving">Guardar</button>
+      <button id="modelo-cancel-button" class="btn" type="button" (click)="cancelar()">Cancelar</button>
     </div>
   </form>
 </div>

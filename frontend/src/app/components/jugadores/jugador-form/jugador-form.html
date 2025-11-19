@@ -1,21 +1,21 @@
-<div class="container">
+<div class="container" id="jugador-form-page">
   <h2>{{ titulo }}</h2>
   <div class="error" *ngIf="error">{{ error }}</div>
 
-  <form class="form" [formGroup]="form" (ngSubmit)="guardar()">
+  <form id="jugador-form" class="form" [formGroup]="form" (ngSubmit)="guardar()">
     <label>Nombre
-      <input formControlName="nombre" />
+      <input id="jugador-nombre" formControlName="nombre" />
     </label>
     <label>Email
-      <input formControlName="email" />
+      <input id="jugador-email" formControlName="email" />
     </label>
     <label>Teléfono
-      <input formControlName="telefono" />
+      <input id="jugador-telefono" formControlName="telefono" />
     </label>
 
     <div class="actions">
-      <button class="btn-primary" type="submit" [disabled]="saving">Guardar</button>
-      <button class="btn" type="button" (click)="cancelar()">Cancelar</button>
+      <button id="jugador-save-button" class="btn-primary" type="submit" [disabled]="saving">Guardar</button>
+      <button id="jugador-cancel-button" class="btn" type="button" (click)="cancelar()">Cancelar</button>
     </div>
   </form>
 </div>

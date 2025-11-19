@@ -1,40 +1,40 @@
-<h2>{{ titulo }}</h2>
+<h2 id="barco-form-title">{{ titulo }}</h2>
 
 <div class="error" *ngIf="error">{{ error }}</div>
 
-<form [formGroup]="form" (ngSubmit)="guardar()" class="form">
+<form id="barco-form" [formGroup]="form" (ngSubmit)="guardar()" class="form">
   <label>posX
-    <input type="number" formControlName="posX" />
+    <input id="barco-posx" type="number" formControlName="posX" />
   </label>
 
   <label>posY
-    <input type="number" formControlName="posY" />
+    <input id="barco-posy" type="number" formControlName="posY" />
   </label>
 
   <label>velocidadX
-    <input type="number" formControlName="velocidadX" />
+    <input id="barco-velx" type="number" formControlName="velocidadX" />
   </label>
 
   <label>velocidadY
-    <input type="number" formControlName="velocidadY" />
+    <input id="barco-vely" type="number" formControlName="velocidadY" />
   </label>
 
   <label>Jugador
-    <select formControlName="jugadorId">
+    <select id="barco-jugador" formControlName="jugadorId">
       <option [ngValue]="null" disabled>Seleccione…</option>
       <option *ngFor="let j of jugadores" [ngValue]="j.id">{{ j.nombre }}</option>
     </select>
   </label>
 
   <label>Modelo
-    <select formControlName="modeloId">
+    <select id="barco-modelo" formControlName="modeloId">
       <option [ngValue]="null" disabled>Seleccione…</option>
       <option *ngFor="let m of modelos" [ngValue]="m.id">{{ m.nombreModelo }}</option>
     </select>
   </label>
 
   <div class="actions">
-    <button class="btn-primary" type="submit" [disabled]="saving">Guardar</button>
-    <button class="btn" type="button" (click)="cancelar()">Cancelar</button>
+    <button id="barco-save-button" class="btn-primary" type="submit" [disabled]="saving">Guardar</button>
+    <button id="barco-cancel-button" class="btn" type="button" (click)="cancelar()">Cancelar</button>
   </div>
 </form>

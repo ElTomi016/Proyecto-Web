@@ -1,13 +1,13 @@
-<section class="card container">
+<section class="card container" id="modelos-page">
   <header class="card-head">
     <h1>Modelos de Barco</h1>
-    <button class="btn-primary" (click)="goNew()">+ Nuevo Modelo</button>
+    <button id="modelos-new-button" class="btn-primary" (click)="goNew()">+ Nuevo Modelo</button>
   </header>
 
   <div *ngIf="loading">Cargando…</div>
   <div class="error" *ngIf="!loading && error">{{ error }}</div>
 
-  <table class="table" *ngIf="!loading && !error">
+  <table id="modelos-table" class="table" *ngIf="!loading && !error">
     <thead>
       <tr>
         <th>ID</th>
@@ -17,7 +17,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let m of modelos">
+      <tr *ngFor="let m of modelos" [attr.id]="'modelo-row-' + m.id" [attr.data-modelo-id]="m.id">
         <td>{{ m.id }}</td>
         <td>{{ m.nombreModelo }}</td>
         <td>{{ m.color }}</td>

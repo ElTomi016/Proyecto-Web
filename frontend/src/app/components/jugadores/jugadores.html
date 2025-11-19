@@ -1,13 +1,13 @@
-<section class="card container">
+<section class="card container" id="jugadores-page">
   <header class="card-head">
     <h1>Lista de Jugadores</h1>
-    <button class="btn-primary" (click)="goNew()">+ Nuevo Jugador</button>
+    <button id="jugadores-new-button" class="btn-primary" (click)="goNew()">+ Nuevo Jugador</button>
   </header>
 
   <div *ngIf="loading">Cargando…</div>
   <div class="error" *ngIf="!loading && error">{{ error }}</div>
 
-  <table class="table" *ngIf="!loading && !error">
+  <table id="jugadores-table" class="table" *ngIf="!loading && !error">
     <thead>
       <tr>
         <th>ID</th>
@@ -18,7 +18,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let j of jugadores">
+      <tr *ngFor="let j of jugadores" [attr.id]="'jugador-row-' + j.id" [attr.data-jugador-id]="j.id">
         <td>{{ j.id }}</td>
         <td>{{ j.nombre }}</td>
         <td>{{ j.email }}</td>
