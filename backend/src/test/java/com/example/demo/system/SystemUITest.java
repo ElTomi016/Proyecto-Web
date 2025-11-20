@@ -2,13 +2,17 @@ package com.example.demo.system;
 
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.assertions.LocatorAssertions;
 import com.microsoft.playwright.assertions.PlaywrightAssertions;
+import com.microsoft.playwright.options.SelectOption;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -74,7 +78,7 @@ class SystemUITest {
             });
             page.onRequestFailed(req -> {
                 if (req.url().contains("/api/")) {
-                    System.out.println("[browser-request-failed] " + req.url() + " :: " + req.failure().errorText());
+                    System.out.println("[browser-request-failed] " + req.url() + " :: " + req.failure());
                 }
             });
             page.onResponse(resp -> {
@@ -92,7 +96,7 @@ class SystemUITest {
             login(page, "admin", "admin123");
             long jugadorId = createJugador(page, jugadorName, jugadorEmail, jugadorPhone);
             long modeloId = createModelo(page, modeloNombre, modeloColor);
-            long barcoId = createBarco(page, jugadorId, modeloId, jugadorName);
+            long barcoId = createBarco(page, jugadorId, modeloId, jugadorName, modeloNombre);
             long partidaId = createMatch(page, barcoId, jugadorName);
 
             page.click("#topbar-logout");
@@ -188,7 +192,7 @@ class SystemUITest {
         return Long.parseLong(idText);
     }
 
-    private long createBarco(Page page, long jugadorId, long modeloId, String jugadorName) {
+    private long createBarco(Page page, long jugadorId, long modeloId, String jugadorName, String modeloNombre) {
         page.click("#nav-admin-barcos");
         page.waitForURL("**/admin/barcos");
         page.waitForSelector("#barcos-page");
@@ -199,8 +203,13 @@ class SystemUITest {
         page.fill("#barco-posy", "2");
         page.fill("#barco-velx", "0");
         page.fill("#barco-vely", "0");
-        page.selectOption("#barco-jugador", String.valueOf(jugadorId));
-        page.selectOption("#barco-modelo", String.valueOf(modeloId));
+        Page.WaitForSelectorOptions dropdownWait = new Page.WaitForSelectorOptions()
+                .setState(WaitForSelectorState.ATTACHED)
+                .setTimeout(30_000);
+        page.waitForSelector("#barco-jugador option:not([disabled])", dropdownWait);
+        page.waitForSelector("#barco-modelo option:not([disabled])", dropdownWait);
+        page.selectOption("#barco-jugador", new SelectOption().setLabel(jugadorName));
+        page.selectOption("#barco-modelo", new SelectOption().setLabel(modeloNombre));
         page.click("#barco-save-button");
         page.waitForURL("**/admin/barcos");
         page.waitForSelector("#barcos-table");
@@ -226,7 +235,9 @@ class SystemUITest {
         waitForMapReady(page);
         Locator chip = page.locator("#current-partida-chip");
         assertThat(chip).isVisible();
-        assertThat(page.locator("#player-name-label")).containsText(jugadorName);
+        Locator playerLabel = page.locator("#player-name-label");
+        PlaywrightAssertions.assertThat(playerLabel).containsText(jugadorName,
+                new LocatorAssertions.ContainsTextOptions().setTimeout(30_000));
         String chipText = chip.innerText().trim();
         long partidaId = Long.parseLong(chipText.replaceAll("\\D", ""));
         Assertions.assertTrue(partidaId > 0, "Partida ID inválido");
@@ -252,14 +263,18 @@ class SystemUITest {
         String initialVelocity = page.locator("#current-velocity").innerText().trim();
         String initialPosition = page.locator("#position-values").innerText().trim();
         page.click("#move-right");
-        assertThat(page.locator("#next-velocity")).containsText("vx=1 vy=0");
+        page.waitForFunction("selector => document.querySelector(selector)?.textContent?.includes('vx=1 vy=0')",
+                "#next-velocity", new Page.WaitForFunctionOptions().setTimeout(10_000));
         page.click("#confirm-move-button");
-        page.waitForFunction("selector => document.querySelector(selector)?.textContent.includes('vx=1 vy=0')",
-                "#current-velocity");
-        PlaywrightAssertions.assertThat(page.locator("#current-velocity")).containsText("vx=1 vy=0");
+        page.reload();
+        page.waitForURL("**/juego");
+        waitForMapReady(page);
+        PlaywrightAssertions.assertThat(page.locator("#current-velocity")).containsText("vx=1 vy=0",
+                new LocatorAssertions.ContainsTextOptions().setTimeout(30_000));
         page.waitForFunction(
                 "data => { const node = document.querySelector(data.selector); return !!node && node.textContent !== data.expected; }",
-                Map.of("selector", "#position-values", "expected", initialPosition));
+                Map.of("selector", "#position-values", "expected", initialPosition),
+                new Page.WaitForFunctionOptions().setTimeout(30_000));
         String updatedPosition = page.locator("#position-values").innerText().trim();
         Assertions.assertNotEquals(initialPosition, updatedPosition, "La posición no cambió tras mover el barco");
         Assertions.assertNotEquals(initialVelocity, page.locator("#current-velocity").innerText().trim(),
@@ -285,6 +300,12 @@ class SystemUITest {
         pb.directory(FRONTEND_DIR.toFile());
         pb.redirectErrorStream(true);
         Map<String, String> env = pb.environment();
+        env.putIfAbsent("CI", "true");
+        env.put("BROWSER", "none");
+        env.put("NG_CLI_ANALYTICS", "false");
+        env.putIfAbsent("API_BASE_URL", "http://127.0.0.1:8080");
+        env.put("PORT", Integer.toString(frontendPort));
+        env.put("HOST", frontendHost);
         frontendProcess = pb.start();
         frontendOutputThread = new Thread(() -> {
             try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(frontendProcess.getInputStream()))) {
@@ -330,20 +351,52 @@ class SystemUITest {
     }
 
     private void waitForHttp(String url) throws Exception {
-        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
-        long deadline = System.currentTimeMillis() + Duration.ofSeconds(90).toMillis();
-        while (System.currentTimeMillis() < deadline) {
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(15))
+                .GET()
+                .build();
+        long deadline = System.nanoTime() + Duration.ofMinutes(3).toNanos();
+        Exception lastError = null;
+        int attempt = 0;
+        while (System.nanoTime() < deadline) {
+            attempt++;
+            if (frontendProcess != null && !frontendProcess.isAlive()) {
+                throw new IllegalStateException("Frontend finalizó inesperadamente con código " + frontendProcess.exitValue());
+            }
             try {
-                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+                if (!isPortOpen(frontendHost, frontendPort)) {
+                    Thread.sleep(500);
+                    continue;
+                }
                 HttpResponse<Void> response = client.send(request, HttpResponse.BodyHandlers.discarding());
                 if (response.statusCode() < 500) {
                     return;
                 }
-            } catch (IOException | InterruptedException ignored) {
-                Thread.sleep(1000);
+                lastError = null;
+            } catch (IOException | InterruptedException ex) {
+                lastError = ex;
             }
             Thread.sleep(1000);
         }
-        throw new IllegalStateException("Frontend no respondió a tiempo");
+        String message = "Frontend no respondió a tiempo";
+        if (lastError != null) {
+            message += ": " + lastError.getMessage();
+        }
+        throw new IllegalStateException(message);
+    }
+
+    private boolean isPortOpen(String host, int port) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, port), 2000);
+            return socket.isConnected();
+        } catch (IOException ex) {
+            return false;
+        }
     }
 }

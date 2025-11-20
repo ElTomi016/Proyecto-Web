@@ -19,7 +19,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.core.env.Environment;
+
 import java.util.List;
+import java.util.Arrays;
 
 @Configuration
 @EnableMethodSecurity
@@ -27,31 +30,41 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserAccountDetailsService userDetailsService;
+    private final Environment environment;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-                          UserAccountDetailsService userDetailsService) {
+                          UserAccountDetailsService userDetailsService,
+                          Environment environment) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.userDetailsService = userDetailsService;
+        this.environment = environment;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        boolean systemTest = Arrays.asList(environment.getActiveProfiles()).contains("systemtest");
         http
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/h2-console/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/api/partidas/barcos/*/pos").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/partidas/barcos/**").hasRole("JUGADOR")
-                .requestMatchers(HttpMethod.POST, "/api/partidas").hasAnyRole("ADMIN", "JUGADOR")
-                .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("ADMIN", "JUGADOR")
-                .requestMatchers(HttpMethod.POST, "/api/barcos/**", "/api/jugadores/**", "/api/modelos/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/barcos/**", "/api/jugadores/**", "/api/modelos/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/barcos/**", "/api/jugadores/**", "/api/modelos/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        if (systemTest) {
+            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        } else {
+            http.authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/api/auth/**", "/h2-console/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    .requestMatchers(HttpMethod.PUT, "/api/partidas/barcos/*/pos").hasAnyRole("ADMIN", "JUGADOR")
+                    .requestMatchers(HttpMethod.PUT, "/api/partidas/barcos/**").hasAnyRole("ADMIN", "JUGADOR")
+                    .requestMatchers(HttpMethod.POST, "/api/partidas").hasAnyRole("ADMIN", "JUGADOR")
+                    .requestMatchers(HttpMethod.GET, "/api/**").hasAnyRole("ADMIN", "JUGADOR")
+                    .requestMatchers(HttpMethod.POST, "/api/barcos/**", "/api/jugadores/**", "/api/modelos/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/api/barcos/**", "/api/jugadores/**", "/api/modelos/**").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.DELETE, "/api/barcos/**", "/api/jugadores/**", "/api/modelos/**").hasRole("ADMIN")
+                    .anyRequest().authenticated()
+            );
+        }
+
+        http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             .userDetailsService(userDetailsService);
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

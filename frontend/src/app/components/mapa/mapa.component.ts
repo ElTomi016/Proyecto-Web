@@ -804,7 +804,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
       id: Number(b.id),
       posX: Number(b.posX ?? 0),
       posY: Number(b.posY ?? 0),
-      label: b.playerName || b.nombre || b.jugador?.nombre || `#${b.id}`,
+      label: b.playerName || b.nombre || b.jugadorNombre || b.jugador?.nombre || b.jugador?.email || b.label || `#${b.id}`,
     }));
     const highlighted = this.playerBoatIds.length
       ? this.playerBoatIds
@@ -864,7 +864,7 @@ export class MapaComponent implements AfterViewInit, OnDestroy {
     this.posY = Number(sel.posY ?? 0);
     this.pendingDx = 0;
     this.pendingDy = 0;
-    const name = sel.playerName || sel.nombre || sel.jugador?.nombre || sel.jugador?.email || '';
+    const name = sel.playerName || sel.nombre || sel.jugadorNombre || sel.jugador?.nombre || sel.jugador?.email || sel.label || '';
     this.currentPlayerName = name || 'Sin jugador asignado';
     this.updatePreviewLanding();
   }
