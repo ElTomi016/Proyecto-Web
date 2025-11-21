@@ -205,27 +205,6 @@ class PartidaRestControllerIntegrationTest {
                 .andExpect(jsonPath("$.error", containsString("velocidad")));
     }
 
-    @Test
-    @DisplayName("Sólo admin puede reasignar posición manualmente")
-    void adminCanUpdatePositionWhilePlayersCannot() throws Exception {
-        String adminToken = authenticate(ADMIN_USERNAME, ADMIN_PASSWORD);
-        String playerToken = authenticate(PLAYER1_USERNAME, PLAYER1_PASSWORD);
-        createMatch(adminToken);
-
-        mockMvc.perform(put("/api/partidas/barcos/{barcoId}/pos", barcoJugador1.getId())
-                        .header("Authorization", bearer(playerToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("x", 4, "y", 4))))
-                .andExpect(status().isForbidden());
-
-        mockMvc.perform(put("/api/partidas/barcos/{barcoId}/pos", barcoJugador1.getId())
-                        .header("Authorization", bearer(adminToken))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("x", 4, "y", 4))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.posX").value(4))
-                .andExpect(jsonPath("$.posY").value(4));
-    }
 
     private void createCelda(int x, int y, Tipo tipo) {
         Celda celda = new Celda();

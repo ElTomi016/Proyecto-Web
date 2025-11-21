@@ -9,11 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
-
-/**
- * Helper service that guarantees every Jugador has a matching credential so
- * that UI scenarios (including automated tests) can log in with predictable data.
- */
 @Service
 public class JugadorAccountService {
 

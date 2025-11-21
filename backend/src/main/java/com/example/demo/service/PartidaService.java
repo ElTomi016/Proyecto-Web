@@ -32,7 +32,6 @@ public class PartidaService {
     private final PartidaBarcoRepository partidaBarcoRepo;
     private final Map<Long, Long> partidaGanador = new ConcurrentHashMap<>();
 
-    // emisores SSE por partida
     private final Map<Long, CopyOnWriteArrayList<SseEmitter>> emitters = new ConcurrentHashMap<>();
     private record MoveResult(boolean moved, boolean destroyed, boolean reachedGoal) {}
 
@@ -407,7 +406,6 @@ public class PartidaService {
         return new MoveResult(true, false, false);
     }
 
-    // API para mover un barco (llamada desde frontend)
     @Transactional
     public Optional<Barco> updateBarcoPos(Long barcoId, Integer x, Integer y) {
         return barcoRepo.findById(barcoId).map(b -> {
@@ -550,7 +548,6 @@ public class PartidaService {
         partidaRepo.save(partida);
     }
 
-    // Resuelve ancho del mapa intentando varios getters/campos por reflexión.
     private int resolveMapWidth(Mapa mapa) {
         if (mapa == null) return 10;
         Integer v = tryGetIntProperty(mapa, new String[]{"getWidth","getAncho","getColumns","getColumnas","getColumnCount","getCols","getColsCount","getXSize","getW"});
@@ -559,7 +556,6 @@ public class PartidaService {
         return v == null ? 10 : v;
     }
 
-    // Resuelve alto del mapa intentando varios getters/campos por reflexión.
     private int resolveMapHeight(Mapa mapa) {
         if (mapa == null) return 10;
         Integer v = tryGetIntProperty(mapa, new String[]{"getHeight","getAlto","getRows","getFilas","getYSize","getH"});
@@ -591,11 +587,6 @@ public class PartidaService {
         return null;
     }
 
-    /**
-     * Busca una Celda para el mapa y coordenadas dadas usando
-     * comparación por referencia de mapa (id) y detección de campos/getters
-     * para x/y por reflexión (por compatibilidad con distintos nombres).
-     */
     private Optional<Celda> findCelda(Mapa mapa, int x, int y) {
         if (mapa == null) return Optional.empty();
         if (mapa.getId() != null) {
@@ -604,31 +595,26 @@ public class PartidaService {
                 return precise;
             }
         }
-        // intentar filtrar por mapa si Celda tiene referencia a Mapa
         return celdaRepo.findAll().stream()
                 .filter(c -> {
                     try {
-                        // comparar mapa por id si existe
                         Method gm = null;
                         try { gm = c.getClass().getMethod("getMapa"); } catch (NoSuchMethodException ignored) {}
                         if (gm != null) {
                             Object cm = gm.invoke(c);
                             if (cm != null) {
-                                // intentar getId
                                 Method gid = null;
                                 try { gid = cm.getClass().getMethod("getId"); } catch (NoSuchMethodException ignored) {}
                                 if (gid != null) {
                                     Object cid = gid.invoke(cm);
                                     Object mid = mapa.getId();
                                     if (cid != null && mid != null && cid.equals(mid)) {
-                                        // mapa coincide, seguir comprobando coords
                                     } else {
                                         return false;
                                     }
                                 }
                             }
                         }
-                        // comparar coordenadas de la celda con reflexión
                         Integer cx = tryGetIntProperty(c, new String[]{"getPosX","getX","getCol","getColumna","getFilaX","getPosicionX","getPosicion"});
                         if (cx == null) cx = tryGetIntField(c, new String[]{"posX","x","col","columna","filaX","posicionX","posicion"});
                         Integer cy = tryGetIntProperty(c, new String[]{"getPosY","getY","getRow","getFila","getPosicionY","getPosicion"});

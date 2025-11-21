@@ -92,3 +92,83 @@ El siguiente diagrama muestra el modelo entidad–relación diseñado para la ap
 2. Compilar y ejecutar con Maven:
    ```bash
    mvn spring-boot:run
+   ```
+
+---
+
+## Resumen de cambios recientes
+En esta versión se han implementado y mejorado varios aspectos del flujo de juego y la UI front-end:
+
+- Nueva pantalla de entrada de juego (/juego) con opciones "Cargar partida" y "Crear nueva".
+- Componente de setup (JuegoSetup) para seleccionar mapa y barcos antes de iniciar una partida.
+- Vista de juego reescrita como componente Angular (MapaComponent):
+  - Canvas responsivo con grilla y render de barcos.
+  - Panel de control tipo mockup (turno, vx/vy, pad direccional, multiplicador, Aplicar movimiento).
+  - Lista de barcos y selección de “barcos jugables”.
+  - Integración con GameService para sincronización en tiempo real.
+
+---
+
+## Requisitos previos
+- Java 17+ y Maven 3.6+
+- Node.js 18+ y npm
+- Angular CLI (opcional para desarrollo: ng)
+
+---
+
+## (AÑADIDO) Levantar el proyecto (desarrollo) — pasos detallados
+
+1) Backend (Spring Boot)
+- Ir al directorio backend:
+  ```bash
+  cd /home/ramir/Proyecto-Web/backend
+  mvn spring-boot:run
+  ```
+- El backend por defecto sirve APIs REST en http://localhost:8080 (revisa application.properties).
+
+2) Frontend (Angular)
+- Ir al directorio frontend:
+  ```bash
+  cd /home/ramir/Proyecto-Web/frontend
+  npm install
+  npm start
+  ```
+---
+
+## Cómo jugar
+1. Ir a http://localhost:4200/juego
+2. Elegir "Crear nueva partida" o "Cargar partida".
+3. Si creas: seleccionar mapa y los barcos que deseas incluir y pulsar "Iniciar partida".
+4. En la vista de juego:
+   - Marcar los barcos que quieres controlar.
+   - Seleccionar un barco (lista o clic en canvas).
+   - Ajustar vx/vy con el pad direccional o botones +/-.
+   - Pulsar "Aplicar movimiento" para enviar al servidor.
+   - El backend emite estado via SSE y la UI se actualiza automáticamente.
+
+---
+
+## (AÑADIDO) Endpoints y convenciones (resumen)
+El frontend usa GameService para interactuar con el backend. Endpoints principales (resumen, revisar game.service para rutas exactas):
+
+- GET /api/partidas             — listar partidas
+- POST /api/partidas            — crear partida
+- GET /api/barcos               — listar barcos
+- GET /api/jugadores            — listar jugadores
+- GET /api/mapas                — listar mapas
+- SSE: GET /api/partidas/{id}/events — stream de estado de la partida
+- POST /api/partidas/{id}/barco/{barcoId}/pos — set posición (o equivalente)
+- POST /api/partidas/{id}/barco/{barcoId}/vel — set velocidad
+
+---
+
+## Tests
+
+Backend:
+```bash
+cd /home/ramir/Proyecto-Web/backend
+mvn test
+```
+Los tests están en src/test/java y los reports en target/surefire-reports.
+
+---
