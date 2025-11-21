@@ -8,6 +8,7 @@ El sistema está desarrollado en **Spring Boot** bajo un enfoque multipágina (M
 ---
 
 Video de sustentación #1 - https://youtu.be/SdSmSomyeBI
+Video de sustentación #3 - https://youtu.be/PsF7-KRu278
 
 ---
 
